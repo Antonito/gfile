@@ -11,7 +11,7 @@ import (
 )
 
 // MustReadStdin blocks until input is received from stdin
-func MustReadStdin() string {
+func MustReadStdin() (string, error) {
 	r := bufio.NewReader(os.Stdin)
 
 	var in string
@@ -20,7 +20,7 @@ func MustReadStdin() string {
 		in, err = r.ReadString('\n')
 		if err != io.EOF {
 			if err != nil {
-				panic(err)
+				return "", err
 			}
 		}
 		in = strings.TrimSpace(in)
@@ -30,30 +30,27 @@ func MustReadStdin() string {
 	}
 
 	fmt.Println("")
-	return in
+	return in, nil
 }
 
 // Encode encodes the input in base64
 // It can optionally zip the input before encoding
-func Encode(obj interface{}) string {
+func Encode(obj interface{}) (string, error) {
 	b, err := json.Marshal(obj)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(b)
+	return base64.StdEncoding.EncodeToString(b), nil
 }
 
 // Decode decodes the input from base64
 // It can optionally unzip the input after decoding
-func Decode(in string, obj interface{}) {
+func Decode(in string, obj interface{}) error {
 	b, err := base64.StdEncoding.DecodeString(in)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	err = json.Unmarshal(b, obj)
-	if err != nil {
-		panic(err)
-	}
+	return json.Unmarshal(b, obj)
 }

@@ -12,7 +12,7 @@ deps:
 
 build: deps
 	@$(ECHO) "==> Building ..."
-	@go build -o $(NAME) .
+	@go build -race -o $(NAME) .
 
 build-all: deps
 	@$(ECHO) "==> Building all binaries..."
