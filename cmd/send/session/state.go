@@ -68,6 +68,15 @@ func (s *Session) onOpenHandler() func() {
 	}
 }
 
+func (s *Session) dumpStats() {
+	duration := time.Since(s.timeStart)
+	speedMb := (float64(s.nbBytesSent) / 1024 / 1024) / duration.Seconds()
+	fmt.Printf("Bytes read: %v\n", s.nbBytesRead)
+	fmt.Printf("Bytes sent: %v\n", s.nbBytesSent)
+	fmt.Printf("Duration:   %v\n", duration.String())
+	fmt.Printf("Speed:      %.04f MB/s\n", speedMb)
+}
+
 func (s *Session) close(calledFromCloseHandler bool) {
 	if calledFromCloseHandler == false {
 		s.dataChannel.Close()
@@ -81,13 +90,7 @@ func (s *Session) close(calledFromCloseHandler bool) {
 	}
 	s.doneCheck = true
 	s.doneCheckLock.Unlock()
-
-	duration := time.Since(s.timeStart)
-	speedMb := (float64(s.nbBytesSent) / 1024 / 1024) / duration.Seconds()
-	fmt.Printf("Bytes read: %v\n", s.nbBytesRead)
-	fmt.Printf("Bytes sent: %v\n", s.nbBytesSent)
-	fmt.Printf("Duration:   %v\n", duration.String())
-	fmt.Printf("Speed:      %.04f MB/s\n", speedMb)
+	s.dumpStats()
 	close(s.done)
 }
 

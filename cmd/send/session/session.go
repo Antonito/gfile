@@ -111,8 +111,7 @@ func (s *Session) createOffer() error {
 	}
 
 	// Sets the LocalDescription, and starts our UDP listeners
-	err = s.peerConnection.SetLocalDescription(offer)
-	if err != nil {
+	if err := s.peerConnection.SetLocalDescription(offer); err != nil {
 		return err
 	}
 
