@@ -8,6 +8,8 @@ gfile is a WebRTC based file exchange software.
 
 It allows to share a file directly between two computers, without the need of a third party.
 
+![ezgif-5-9936f8008e4d](https://user-images.githubusercontent.com/11705040/54066419-39d32a80-41e4-11e9-83de-bd16be302766.gif)
+
 ## Note
 
 This project is still in its early stage.
