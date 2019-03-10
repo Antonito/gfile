@@ -48,6 +48,7 @@ func Test_HTTP(t *testing.T) {
 	go func() {
 		stream := &bytes.Buffer{}
 		_, err := stream.WriteString(msg)
+		assert.Nil(err)
 
 		client := &http.Client{}
 
