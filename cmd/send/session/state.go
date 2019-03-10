@@ -25,6 +25,7 @@ func (s *Session) writeToNetwork() {
 	defer fmt.Println("Stopped sending data...")
 
 	for {
+	SELECT:
 		select {
 		case <-s.stopSending:
 			fmt.Printf("Pausing network I/O... (remaining at least %v packets)", len(s.output))
@@ -36,12 +37,25 @@ func (s *Session) writeToNetwork() {
 				return
 			}
 
-			// Writing packet
-			if err := s.dataChannel.Send(data.buff); err != nil {
-				fmt.Printf("Error, cannot send to client: %v\n", err)
-				return
+			s.msgToBeSent = append(s.msgToBeSent, data)
+
+			for len(s.msgToBeSent) != 0 {
+				cur := s.msgToBeSent[0]
+
+				// TODO: Correct check
+				if s.dataChannel.ReadyState != webrtc.DataChannelStateOpen {
+					fmt.Printf("Status: %v, dropping %v bytes\n", s.dataChannel.ReadyState, data.n)
+					break SELECT
+				}
+
+				// Writing packet
+				if err := s.dataChannel.Send(cur.buff); err != nil {
+					fmt.Printf("Error, cannot send to client: %v\n", err)
+					return
+				}
+				s.nbBytesSent += uint64(cur.n)
+				s.msgToBeSent = s.msgToBeSent[1:]
 			}
-			s.nbBytesSent += uint64(data.n)
 		}
 	}
 }

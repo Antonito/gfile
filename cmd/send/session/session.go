@@ -24,6 +24,7 @@ type Session struct {
 	peerConnection *webrtc.PeerConnection
 	dataChannel    *webrtc.DataChannel
 	dataBuff       []byte
+	msgToBeSent    []outputMsg
 
 	// Control
 	done        chan struct{}
