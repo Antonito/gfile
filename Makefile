@@ -20,6 +20,8 @@ build-all: deps
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-w -extldflags "-static"' -o build/$(NAME)-linux-x86_64 main.go
 	@CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -a -ldflags '-w -extldflags "-static"' -o build/$(NAME)-linux-i386 main.go
 
+generate:
+	@goreleaser --snapshot --skip-publish --rm-dist
 
 lint:
 	@$(GOPATH)/bin/golint -set_exit_status ./... | grep -v vendor/ && exit 1 || exit 0
@@ -44,4 +46,4 @@ coverage:
 coverhtml: coverage
 	@go tool cover -html=cover/testCoverage.txt -o cover/coverage.html
 
-.PHONY: deps build build-all test clean lint
+.PHONY: deps build build-all test clean lint generate
