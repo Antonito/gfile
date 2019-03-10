@@ -24,7 +24,7 @@ func (s *Session) Connect() error {
 
 	// Wait for the answer to be pasted
 	fmt.Println(`Please, provide the SDP via:
-curl localhost:8080/sdp --data "$SDP"`)
+echo "$SDP" | gfile sdp`)
 	answer := webrtc.SessionDescription{}
 	for {
 		if err := utils.Decode(<-sdpChan, &answer); err == nil {
@@ -84,12 +84,9 @@ func (s *Session) createOffer() error {
 }
 
 func (s *Session) createDataChannel() error {
-	ordered := true
-	maxPacketLifeTime := uint16(5000)
-	dataChannel, err := s.peerConnection.CreateDataChannel("data", &webrtc.DataChannelInit{
-		Ordered:           &ordered,
-		MaxPacketLifeTime: &maxPacketLifeTime,
-	})
+	//ordered := true
+	//maxPacketLifeTime := uint16(0xFFFF)
+	dataChannel, err := s.peerConnection.CreateDataChannel("data", nil)
 	if err != nil {
 		return err
 	}

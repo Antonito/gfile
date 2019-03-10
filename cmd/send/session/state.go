@@ -13,7 +13,6 @@ func (s *Session) setStateManager() {
 	// This will notify you when the peer has connected/disconnected
 	s.peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
-		fmt.Printf("Connection state is %v\n", s.peerConnection.ConnectionState)
 		if connectionState == webrtc.ICEConnectionStateDisconnected {
 			s.stopSending <- struct{}{}
 		}
@@ -25,10 +24,9 @@ func (s *Session) writeToNetwork() {
 	defer fmt.Println("Stopped sending data...")
 
 	for {
-	SELECT:
 		select {
 		case <-s.stopSending:
-			fmt.Printf("Pausing network I/O... (remaining at least %v packets)", len(s.output))
+			fmt.Printf("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 			return
 		case data := <-s.output:
 			if data.n == 0 {
@@ -41,13 +39,6 @@ func (s *Session) writeToNetwork() {
 
 			for len(s.msgToBeSent) != 0 {
 				cur := s.msgToBeSent[0]
-
-				// TODO: Correct check
-				if s.dataChannel.ReadyState != webrtc.DataChannelStateOpen {
-					fmt.Printf("Status: %v, dropping %v bytes\n", s.dataChannel.ReadyState, data.n)
-					break SELECT
-				}
-
 				// Writing packet
 				if err := s.dataChannel.Send(cur.buff); err != nil {
 					fmt.Printf("Error, cannot send to client: %v\n", err)
