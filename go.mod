@@ -12,6 +12,7 @@ require (
 	github.com/pions/rtp v1.1.0 // indirect
 	github.com/pions/transport v0.4.0 // indirect
 	github.com/pions/webrtc v1.2.1-0.20190309091518-3426d00e2cda
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 // indirect
 	golang.org/x/net v0.0.0-20190310014029-b774fd8d5c0f // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect

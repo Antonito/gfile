@@ -10,9 +10,8 @@ import (
 	"strings"
 )
 
-// MustReadStdin blocks until input is received from stdin
-func MustReadStdin() (string, error) {
-	r := bufio.NewReader(os.Stdin)
+func mustRead(stream io.Reader) (string, error) {
+	r := bufio.NewReader(stream)
 
 	var in string
 	for {
@@ -31,6 +30,11 @@ func MustReadStdin() (string, error) {
 
 	fmt.Println("")
 	return in, nil
+}
+
+// MustReadStdin blocks until input is received from stdin
+func MustReadStdin() (string, error) {
+	return mustRead(os.Stdin)
 }
 
 // Encode encodes the input in base64
