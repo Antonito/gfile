@@ -12,15 +12,16 @@ import (
 
 func Test_HTTPHandler(t *testing.T) {
 	assert := assert.New(t)
+
 	stream := &bytes.Buffer{}
 
 	sdpChan := make(chan string)
 	handler := handleSDP(sdpChan)
 
 	done := make(chan struct{})
+	msg := "Hello\n"
+	_, err := stream.WriteString(msg)
 	go func() {
-		msg := "Hello\n"
-		_, err := stream.WriteString(msg)
 		assert.Nil(err)
 		res := <-sdpChan
 		assert.Equal(msg, res)
