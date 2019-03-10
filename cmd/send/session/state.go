@@ -109,13 +109,13 @@ func (s *Session) dumpStats() {
 }
 
 func (s *Session) close(calledFromCloseHandler bool) {
-	if calledFromCloseHandler == false {
+	if !calledFromCloseHandler {
 		s.dataChannel.Close()
 	}
 
 	// Sometime, onCloseHandler is not invoked, so it's a work-around
 	s.doneCheckLock.Lock()
-	if s.doneCheck == true {
+	if s.doneCheck {
 		s.doneCheckLock.Unlock()
 		return
 	}
