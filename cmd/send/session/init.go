@@ -93,6 +93,7 @@ func (s *Session) createDataChannel() error {
 	if err != nil {
 		return err
 	}
+	go s.readFile()
 	s.dataChannel = dataChannel
 	s.dataChannel.OnOpen(s.onOpenHandler())
 	s.dataChannel.OnClose(s.onCloseHandler())

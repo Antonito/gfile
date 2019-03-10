@@ -8,6 +8,16 @@ import (
 	"github.com/pions/webrtc"
 )
 
+const (
+	// Must be <= 16384
+	buffSize = 16384
+)
+
+type outputMsg struct {
+	n    int
+	buff []byte
+}
+
 // Session contains informations about a Send Session
 type Session struct {
 	stream         io.Reader
@@ -18,6 +28,7 @@ type Session struct {
 	// Control
 	done        chan struct{}
 	stopSending chan struct{}
+	output      chan outputMsg
 
 	doneCheckLock sync.Mutex
 	doneCheck     bool
@@ -32,9 +43,10 @@ type Session struct {
 func NewSession(f io.Reader) *Session {
 	return &Session{
 		stream:      f,
-		dataBuff:    make([]byte, 4096*2),
+		dataBuff:    make([]byte, buffSize),
 		done:        make(chan struct{}),
-		stopSending: make(chan struct{}),
+		stopSending: make(chan struct{}, 1),
+		output:      make(chan outputMsg, buffSize),
 		nbBytesRead: 0,
 		nbBytesSent: 0,
 		doneCheck:   false,

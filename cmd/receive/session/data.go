@@ -7,6 +7,11 @@ import (
 )
 
 func (s *Session) receiveData() {
+	fmt.Println("Starting to receive data...")
+	defer fmt.Println("Stopped receiving data...")
+
+	// Consume the message channel, until done
+	// Does not stop on error
 	for {
 		select {
 		case <-s.done:
@@ -21,6 +26,7 @@ func (s *Session) receiveData() {
 
 func (s *Session) onMessage() func(msg webrtc.DataChannelMessage) {
 	return func(msg webrtc.DataChannelMessage) {
+		// Store each message in the message channel
 		s.msgChannel <- msg
 	}
 }
