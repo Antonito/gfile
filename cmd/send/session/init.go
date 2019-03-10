@@ -79,7 +79,7 @@ func (s *Session) createOffer() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(encoded)
+	fmt.Fprintln(s.sdpOutput, encoded)
 	return nil
 }
 

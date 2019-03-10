@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ReadStdin(t *testing.T) {
+func Test_ReadStream(t *testing.T) {
 	assert := assert.New(t)
 	stream := &bytes.Buffer{}
 
 	_, err := stream.WriteString("Hello\n")
 	assert.Nil(err)
 
-	str, err := mustRead(stream)
+	str, err := MustReadStream(stream)
 	assert.Equal("Hello", str)
 	assert.Nil(err)
 }
@@ -28,6 +28,11 @@ func Test_Encode(t *testing.T) {
 		shouldErr bool
 		expected  string
 	}{
+		// Invalid object
+		{
+			input:     make(chan int),
+			shouldErr: true,
+		},
 		// Empty input
 		{
 			input:     nil,

@@ -3,6 +3,7 @@ package sdp
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/Antonito/gfile/pkg/utils"
@@ -13,7 +14,7 @@ import (
 func handler(c *cli.Context) error {
 	var encoded string
 	for {
-		data, err := utils.MustReadStdin()
+		data, err := utils.MustReadStream(os.Stdin)
 		if err == nil {
 			// We decode it, but never use it,
 			// just to make sure the data is correct

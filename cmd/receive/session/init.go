@@ -56,7 +56,7 @@ func (s *Session) readOffer() error {
 	offer := webrtc.SessionDescription{}
 
 	for {
-		encoded, err := utils.MustReadStdin()
+		encoded, err := utils.MustReadStream(s.sdpInput)
 		if err == nil {
 			if err := utils.Decode(encoded, &offer); err == nil {
 				break
@@ -86,7 +86,7 @@ func (s *Session) createAnswer() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(resp)
+	fmt.Fprintln(s.sdpOutput, resp)
 	return nil
 }
 
