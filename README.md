@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Antonito/gfile.svg?branch=master)](https://travis-ci.org/Antonito/gfile)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Antonito/gfile)](https://goreportcard.com/report/github.com/Antonito/gfile)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/5888662aebd54d2681f9a737dfd33913)](https://www.codacy.com/app/Antonito/gfile?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Antonito/gfile&amp;utm_campaign=Badge_Grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
