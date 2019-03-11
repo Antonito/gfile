@@ -25,17 +25,12 @@ As of today, it works well with small files. It doesn't work with huge files, du
 ```bash
 # Terminal 1
 gfile send --file filename
-
-# Terminal 2
-echo "$SDP" | gfile sdp
 ```
 
 -   Run the command
 -   A base64 encoded SDP will appear, send it to the remote client
 -   Follow the instructions to send the client's SDP to your process
 -   The file transfer should start
-
-> Due to terms restrictions (ability to treat lines with +1024 characters), the SDP must be sent through the `gfile sdp` command
 
 ### Receiver
 

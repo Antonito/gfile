@@ -16,18 +16,20 @@ func (s *Session) Connect() error {
 		return err
 	}
 
-	sdpChan := utils.HTTPSDPServer()
-
 	if err := s.createOffer(); err != nil {
 		return err
 	}
 
 	// Wait for the answer to be pasted
-	fmt.Println(`Please, provide the SDP via:
-echo "$SDP" | gfile sdp`)
+	fmt.Println(`Please, paste the remote SDP`)
 	answer := webrtc.SessionDescription{}
 	for {
-		if err := utils.Decode(<-sdpChan, &answer); err == nil {
+		val, err := utils.MustReadStream(s.sdpInput)
+		if err != nil {
+			fmt.Printf("Error reading SDP: %v\n", err)
+			continue
+		}
+		if err := utils.Decode(val, &answer); err == nil {
 			break
 		}
 		fmt.Println("Invalid SDP, try aagain...")
@@ -85,9 +87,10 @@ func (s *Session) createOffer() error {
 }
 
 func (s *Session) createDataChannel() error {
-	//ordered := true
-	//maxPacketLifeTime := uint16(0xFFFF)
-	dataChannel, err := s.peerConnection.CreateDataChannel("data", nil)
+	maxPacketLifeTime := uint16(5000)
+	dataChannel, err := s.peerConnection.CreateDataChannel("data", &webrtc.DataChannelInit{
+		MaxPacketLifeTime: &maxPacketLifeTime,
+	})
 	if err != nil {
 		return err
 	}

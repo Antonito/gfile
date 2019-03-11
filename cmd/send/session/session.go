@@ -22,6 +22,7 @@ type outputMsg struct {
 // Session contains informations about a Send Session
 type Session struct {
 	stream         io.Reader
+	sdpInput       io.Reader
 	sdpOutput      io.Writer
 	peerConnection *webrtc.PeerConnection
 	dataChannel    *webrtc.DataChannel
@@ -46,6 +47,7 @@ type Session struct {
 func NewSession(f io.Reader) *Session {
 	return &Session{
 		stream:      f,
+		sdpInput:    os.Stdin,
 		sdpOutput:   os.Stdout,
 		dataBuff:    make([]byte, buffSize),
 		done:        make(chan struct{}),
