@@ -2,10 +2,13 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"strings"
 )
 
@@ -39,8 +42,22 @@ func Encode(obj interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var gzbuff bytes.Buffer
+	gz, err := gzip.NewWriterLevel(&gzbuff, gzip.BestCompression)
+	if err != nil {
+		return "", err
+	}
+	if _, err := gz.Write(b); err != nil {
+		return "", err
+	}
+	if err := gz.Flush(); err != nil {
+		return "", err
+	}
+	if err := gz.Close(); err != nil {
+		return "", err
+	}
 
-	return base64.StdEncoding.EncodeToString(b), nil
+	return base64.StdEncoding.EncodeToString(gzbuff.Bytes()), nil
 }
 
 // Decode decodes the input from base64
@@ -51,5 +68,15 @@ func Decode(in string, obj interface{}) error {
 		return err
 	}
 
-	return json.Unmarshal(b, obj)
+	gz, err := gzip.NewReader(bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+	s, err := ioutil.ReadAll(gz)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(s, obj)
 }

@@ -14,9 +14,9 @@ require (
 	github.com/pions/webrtc v1.2.1-0.20190309091518-3426d00e2cda
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 // indirect
-	golang.org/x/net v0.0.0-20190310014029-b774fd8d5c0f // indirect
+	golang.org/x/net v0.0.0-20190310074541-c10a0554eabf // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
-	golang.org/x/sys v0.0.0-20190309122539-980fc434d28e // indirect
+	golang.org/x/sys v0.0.0-20190310054646-10058d7d4faa // indirect
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
