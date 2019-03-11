@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Antonito/gfile/pkg/utils"
+	"github.com/antonito/gfile/pkg/utils"
 	"github.com/pions/webrtc"
 	"gopkg.in/urfave/cli.v1"
 )

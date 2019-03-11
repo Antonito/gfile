@@ -3,7 +3,7 @@ package session
 import (
 	"fmt"
 
-	"github.com/Antonito/gfile/pkg/utils"
+	"github.com/antonito/gfile/pkg/utils"
 	"github.com/pions/webrtc"
 )
 
@@ -73,6 +73,7 @@ func (s *Session) createOffer() error {
 	if err := s.peerConnection.SetLocalDescription(offer); err != nil {
 		return err
 	}
+	offer.SDP = utils.StripSDP(offer.SDP)
 
 	// Output the offer in base64 so we can paste it in browser
 	encoded, err := utils.Encode(offer)

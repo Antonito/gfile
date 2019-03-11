@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Antonito/gfile/cmd/send/session"
+	"github.com/antonito/gfile/cmd/send/session"
 	"gopkg.in/urfave/cli.v1"
 )
 

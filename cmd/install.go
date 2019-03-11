@@ -3,9 +3,9 @@ package cmd
 import (
 	"sort"
 
-	"github.com/Antonito/gfile/cmd/receive"
-	"github.com/Antonito/gfile/cmd/sdp"
-	"github.com/Antonito/gfile/cmd/send"
+	"github.com/antonito/gfile/cmd/receive"
+	"github.com/antonito/gfile/cmd/sdp"
+	"github.com/antonito/gfile/cmd/send"
 	"gopkg.in/urfave/cli.v1"
 )
 

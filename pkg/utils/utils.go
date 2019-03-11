@@ -35,6 +35,26 @@ func MustReadStream(stream io.Reader) (string, error) {
 	return in, nil
 }
 
+// StripSDP remove useless elements from an SDP
+func StripSDP(originalSDP string) string {
+	finalSDP := strings.Replace(originalSDP, "a=group:BUNDLE audio video data", "a=group:BUNDLE data", -1)
+	tmp := strings.Split(finalSDP, "m=audio")
+	beginningSdp := tmp[0]
+
+	var endSdp string
+	if len(tmp) > 1 {
+		tmp = strings.Split(tmp[1], "a=end-of-candidates")
+		endSdp = strings.Join(tmp[2:], "a=end-of-candidates")
+	} else {
+		endSdp = strings.Join(tmp[1:], "a=end-of-candidates")
+	}
+
+	finalSDP = beginningSdp + endSdp
+	finalSDP = strings.Replace(finalSDP, "\r\n\r\n", "\r\n", -1)
+	// fmt.Printf("SDP -> %v", finalSDP)
+	return finalSDP
+}
+
 // Encode encodes the input in base64
 // It can optionally zip the input before encoding
 func Encode(obj interface{}) (string, error) {

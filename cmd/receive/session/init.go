@@ -3,7 +3,7 @@ package session
 import (
 	"fmt"
 
-	"github.com/Antonito/gfile/pkg/utils"
+	"github.com/antonito/gfile/pkg/utils"
 	"github.com/pions/webrtc"
 )
 
@@ -80,6 +80,7 @@ func (s *Session) createAnswer() error {
 	if err = s.peerConnection.SetLocalDescription(answer); err != nil {
 		return err
 	}
+	answer.SDP = utils.StripSDP(answer.SDP)
 
 	// Output the answer in base64 so we can paste it in browser
 	resp, err := utils.Encode(answer)

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Antonito/gfile/cmd"
+	"github.com/antonito/gfile/cmd"
 	"gopkg.in/urfave/cli.v1"
 )
 
