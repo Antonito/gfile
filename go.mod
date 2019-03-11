@@ -1,4 +1,4 @@
-module github.com/Antonito/gfile
+module github.com/antonito/gfile
 
 go 1.12
 
