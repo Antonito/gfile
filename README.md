@@ -23,7 +23,6 @@ As of today, it works well with small files. It doesn't work with huge files, du
 ### Sender
 
 ```bash
-# Terminal 1
 gfile send --file filename
 ```
 

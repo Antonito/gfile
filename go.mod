@@ -3,22 +3,12 @@ module github.com/antonito/gfile
 go 1.12
 
 require (
-	github.com/cloudflare/sidh v0.0.0-20190228162259-d2f0f90e08aa // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang/protobuf v1.3.0 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/pions/quic-go v0.10.2 // indirect
-	github.com/pions/rtp v1.1.0 // indirect
-	github.com/pions/transport v0.4.0 // indirect
-	github.com/pions/webrtc v1.2.1-0.20190309091518-3426d00e2cda
+	github.com/google/go-cmp v0.2.0 // indirect
+	github.com/pions/pkg v0.0.0-20190125070457-f0a98342fda8 // indirect
+	github.com/pions/webrtc v1.2.1-0.20190313043448-08a93d89ba56
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 // indirect
-	golang.org/x/net v0.0.0-20190310074541-c10a0554eabf // indirect
-	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect
-	golang.org/x/sys v0.0.0-20190310054646-10058d7d4faa // indirect
-	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect
-	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	golang.org/x/net v0.0.0-20190313082753-5c2c250b6a70 // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	gotest.tools v2.2.0+incompatible // indirect
 )

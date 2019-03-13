@@ -87,8 +87,10 @@ func (s *Session) createOffer() error {
 }
 
 func (s *Session) createDataChannel() error {
-	maxPacketLifeTime := uint16(5000)
+	ordered := true
+	maxPacketLifeTime := uint16(10000)
 	dataChannel, err := s.peerConnection.CreateDataChannel("data", &webrtc.DataChannelInit{
+		Ordered:           &ordered,
 		MaxPacketLifeTime: &maxPacketLifeTime,
 	})
 	if err != nil {
