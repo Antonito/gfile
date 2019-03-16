@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/antonito/gfile/cmd/send/session"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -24,6 +25,7 @@ func handler(c *cli.Context) error {
 
 // New creates the command
 func New() cli.Command {
+	log.Traceln("Installing 'send' command")
 	return cli.Command{
 		Name:    "send",
 		Aliases: []string{"s"},

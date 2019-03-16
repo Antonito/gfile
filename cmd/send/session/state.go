@@ -1,8 +1,9 @@
 package session
 
 import (
-	"fmt"
 	"io"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pions/webrtc"
 )
@@ -11,7 +12,7 @@ func (s *Session) setStateManager() {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	s.peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+		log.Infof("ICE Connection State has changed: %s\n", connectionState.String())
 		if connectionState == webrtc.ICEConnectionStateDisconnected {
 			s.stopSending <- struct{}{}
 		}
@@ -19,14 +20,14 @@ func (s *Session) setStateManager() {
 }
 
 func (s *Session) writeToNetwork() {
-	fmt.Println("Starting to send data...")
-	defer fmt.Println("Stopped sending data...")
+	log.Infof("Starting to send data...")
+	defer log.Infof("Stopped sending data...")
 
 	for {
 		select {
 		case <-s.stopSending:
 			s.networkStats.Pause()
-			fmt.Printf("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
+			log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 			return
 		case data := <-s.output:
 			if data.n == 0 {
@@ -42,7 +43,7 @@ func (s *Session) writeToNetwork() {
 				cur := s.msgToBeSent[0]
 				// Writing packet
 				if err := s.dataChannel.Send(cur.buff); err != nil {
-					fmt.Printf("Error, cannot send to client: %v\n", err)
+					log.Errorf("Error, cannot send to client: %v\n", err)
 					return
 				}
 				s.networkStats.AddBytes(uint64(cur.n))
@@ -53,11 +54,11 @@ func (s *Session) writeToNetwork() {
 }
 
 func (s *Session) readFile() {
-	fmt.Println("Starting to read data...")
+	log.Infof("Starting to read data...")
 	s.readingStats.Start()
 	defer func() {
 		s.readingStats.Pause()
-		fmt.Println("Stopped reading data...")
+		log.Infof("Stopped reading data...")
 		close(s.output)
 	}()
 
@@ -68,10 +69,10 @@ func (s *Session) readFile() {
 		if err != nil {
 			if err == io.EOF {
 				s.readingStats.Stop()
-				fmt.Printf("Got EOF after %v bytes!\n", s.readingStats.Bytes())
+				log.Debugf("Got EOF after %v bytes!\n", s.readingStats.Bytes())
 				return
 			}
-			fmt.Printf("Read Error: %v\n", err)
+			log.Errorf("Read Error: %v\n", err)
 			return
 		}
 		s.dataBuff = s.dataBuff[:n]
@@ -117,7 +118,7 @@ func (s *Session) onCloseHandler() func() {
 }
 
 func (s *Session) dumpStats() {
-	fmt.Printf(`
+	log.Infof(`
 Disk   : %s
 Network: %s
 `, s.readingStats.String(), s.networkStats.String())

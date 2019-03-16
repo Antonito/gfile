@@ -3,6 +3,8 @@ package session
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/antonito/gfile/pkg/utils"
 	"github.com/pions/webrtc"
 )
@@ -10,13 +12,17 @@ import (
 // Connect starts a connection and waits till it ends
 func (s *Session) Connect() error {
 	if err := s.createConnection(); err != nil {
+		log.Errorln(err)
 		return err
 	}
+
 	if err := s.createDataChannel(); err != nil {
+		log.Errorln(err)
 		return err
 	}
 
 	if err := s.createOffer(); err != nil {
+		log.Errorln(err)
 		return err
 	}
 
@@ -37,10 +43,12 @@ func (s *Session) Connect() error {
 
 	// Apply the answer as the remote description
 	if err := s.peerConnection.SetRemoteDescription(answer); err != nil {
+		log.Errorln(err)
 		return err
 	}
 
 	<-s.done
+	log.Infoln("Transfer done")
 	return nil
 }
 

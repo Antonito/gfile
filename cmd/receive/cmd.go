@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/antonito/gfile/cmd/receive/session"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -25,6 +27,7 @@ func handler(c *cli.Context) error {
 
 // New creates the command
 func New() cli.Command {
+	log.Traceln("Installing 'receive' command")
 	return cli.Command{
 		Name:    "receive",
 		Aliases: []string{"r"},
