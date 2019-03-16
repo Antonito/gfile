@@ -74,6 +74,6 @@ func Test_Duration(t *testing.T) {
 	// Should return time.Since()
 	s.Start()
 	durationTmp := s.Duration()
-	time.Sleep(10)
+	time.Sleep(10 * time.Nanosecond)
 	assert.Equal(true, s.Duration() > durationTmp)
 }

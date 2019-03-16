@@ -46,7 +46,7 @@ func Test_ControlFlow(t *testing.T) {
 	assert.Equal(originalStart, s.timeStart)
 
 	s.Pause()
-	time.Sleep(10)
+	time.Sleep(10 * time.Nanosecond)
 	s.Start()
 	assert.Equal(true, s.timePaused > originalPausedDuration)
 
