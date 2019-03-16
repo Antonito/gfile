@@ -15,10 +15,15 @@ func (s *Session) receiveData() {
 	for {
 		select {
 		case <-s.done:
+			s.networkStats.Stop()
 			return
 		case msg := <-s.msgChannel:
-			if _, err := s.stream.Write(msg.Data); err != nil {
+			n, err := s.stream.Write(msg.Data)
+
+			if err != nil {
 				fmt.Printf("Error: %v\n", err)
+			} else {
+				s.networkStats.AddBytes(uint64(n))
 			}
 		}
 	}
@@ -34,6 +39,7 @@ func (s *Session) onMessage() func(msg webrtc.DataChannelMessage) {
 func (s *Session) onClose() func() {
 	return func() {
 		fmt.Println("Done !")
+		fmt.Printf("Stats: %s\n", s.networkStats.String())
 		close(s.done)
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 
+	"github.com/antonito/gfile/pkg/stats"
 	"github.com/pions/webrtc"
 )
 
@@ -38,9 +38,15 @@ type Session struct {
 	doneCheck     bool
 
 	// Stats/infos
-	nbBytesRead uint64
-	nbBytesSent uint64
-	timeStart   time.Time
+	readingStats stats.Stats
+	networkStats stats.Stats
+}
+
+// Config contains custom configuration for a session
+type Config struct {
+	Stream      io.Reader // The Stream to read from
+	SDPProvider io.Reader // The SDP reader
+	SDPOutput   io.Writer // The SDP writer
 }
 
 // NewSession creates a new Session
@@ -53,8 +59,14 @@ func NewSession(f io.Reader) *Session {
 		done:        make(chan struct{}),
 		stopSending: make(chan struct{}, 1),
 		output:      make(chan outputMsg, buffSize*10),
-		nbBytesRead: 0,
-		nbBytesSent: 0,
 		doneCheck:   false,
 	}
+}
+
+// NewSessionWith createa a new Session with custom configuration
+func NewSessionWith(c Config) *Session {
+	session := NewSession(c.Stream)
+	session.sdpInput = c.SDPProvider
+	session.sdpOutput = c.SDPOutput
+	return session
 }

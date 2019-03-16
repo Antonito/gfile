@@ -94,6 +94,7 @@ func (s *Session) createAnswer() error {
 func (s *Session) createDataHandler() {
 	s.peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
 		fmt.Printf("New DataChannel %s %d\n", d.Label, d.ID)
+		s.networkStats.Start()
 		d.OnMessage(s.onMessage())
 		d.OnClose(s.onClose())
 	})

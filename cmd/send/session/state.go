@@ -3,7 +3,6 @@ package session
 import (
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/pions/webrtc"
 )
@@ -26,11 +25,13 @@ func (s *Session) writeToNetwork() {
 	for {
 		select {
 		case <-s.stopSending:
+			s.networkStats.Pause()
 			fmt.Printf("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 			return
 		case data := <-s.output:
 			if data.n == 0 {
 				// The channel is closed, nothing more to send
+				s.networkStats.Stop()
 				s.close(false)
 				return
 			}
@@ -44,7 +45,7 @@ func (s *Session) writeToNetwork() {
 					fmt.Printf("Error, cannot send to client: %v\n", err)
 					return
 				}
-				s.nbBytesSent += uint64(cur.n)
+				s.networkStats.AddBytes(uint64(cur.n))
 				s.msgToBeSent = s.msgToBeSent[1:]
 			}
 		}
@@ -53,7 +54,9 @@ func (s *Session) writeToNetwork() {
 
 func (s *Session) readFile() {
 	fmt.Println("Starting to read data...")
+	s.readingStats.Start()
 	defer func() {
+		s.readingStats.Pause()
 		fmt.Println("Stopped reading data...")
 		close(s.output)
 	}()
@@ -64,14 +67,15 @@ func (s *Session) readFile() {
 		n, err := s.stream.Read(s.dataBuff)
 		if err != nil {
 			if err == io.EOF {
-				fmt.Printf("Got EOF after %v bytes!\n", s.nbBytesRead)
+				s.readingStats.Stop()
+				fmt.Printf("Got EOF after %v bytes!\n", s.readingStats.Bytes())
 				return
 			}
 			fmt.Printf("Read Error: %v\n", err)
 			return
 		}
 		s.dataBuff = s.dataBuff[:n]
-		s.nbBytesRead += uint64(n)
+		s.readingStats.AddBytes(uint64(n))
 
 		s.output <- outputMsg{
 			n: n,
@@ -83,20 +87,9 @@ func (s *Session) readFile() {
 
 func (s *Session) onOpenHandler() func() {
 	return func() {
-		if s.timeStart.IsZero() {
-			s.timeStart = time.Now()
-		}
+		s.networkStats.Start()
 		s.writeToNetwork()
 	}
-}
-
-func (s *Session) dumpStats() {
-	duration := time.Since(s.timeStart)
-	speedMb := (float64(s.nbBytesSent) / 1024 / 1024) / duration.Seconds()
-	fmt.Printf("Bytes read: %v\n", s.nbBytesRead)
-	fmt.Printf("Bytes sent: %v\n", s.nbBytesSent)
-	fmt.Printf("Duration:   %v\n", duration.String())
-	fmt.Printf("Speed:      %.04f MB/s\n", speedMb)
 }
 
 func (s *Session) close(calledFromCloseHandler bool) {
@@ -121,4 +114,11 @@ func (s *Session) onCloseHandler() func() {
 	return func() {
 		s.close(true)
 	}
+}
+
+func (s *Session) dumpStats() {
+	fmt.Printf(`
+Disk   : %s
+Network: %s
+`, s.readingStats.String(), s.networkStats.String())
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/antonito/gfile/pkg/stats"
 	"github.com/pions/webrtc"
 )
 
@@ -16,6 +17,8 @@ type Session struct {
 
 	msgChannel chan webrtc.DataChannelMessage
 	done       chan struct{}
+
+	networkStats stats.Stats
 }
 
 // NewSession returns a new Receiver Session
