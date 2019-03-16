@@ -5,19 +5,24 @@ import (
 
 	"github.com/antonito/gfile/pkg/utils"
 	"github.com/pions/webrtc"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Connect starts a connection and waits till it ends
 func (s *Session) Connect() error {
 	if err := s.createConnection(); err != nil {
+		log.Errorln(err)
 		return err
 	}
 	s.createDataHandler()
 
 	if err := s.readOffer(); err != nil {
+		log.Errorln(err)
 		return err
 	}
 	if err := s.createAnswer(); err != nil {
+		log.Errorln(err)
 		return err
 	}
 
@@ -45,7 +50,7 @@ func (s *Session) createConnection() error {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+		log.Infof("ICE Connection State has changed: %s\n", connectionState.String())
 	})
 
 	return nil
@@ -93,7 +98,7 @@ func (s *Session) createAnswer() error {
 
 func (s *Session) createDataHandler() {
 	s.peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-		fmt.Printf("New DataChannel %s %d\n", d.Label, d.ID)
+		log.Debugf("New DataChannel %s %d\n", d.Label, d.ID)
 		s.networkStats.Start()
 		d.OnMessage(s.onMessage())
 		d.OnClose(s.onClose())

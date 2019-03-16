@@ -1,14 +1,14 @@
 package session
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pions/webrtc"
 )
 
 func (s *Session) receiveData() {
-	fmt.Println("Starting to receive data...")
-	defer fmt.Println("Stopped receiving data...")
+	log.Infoln("Starting to receive data...")
+	defer log.Infoln("Stopped receiving data...")
 
 	// Consume the message channel, until done
 	// Does not stop on error
@@ -21,7 +21,7 @@ func (s *Session) receiveData() {
 			n, err := s.stream.Write(msg.Data)
 
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Errorln(err)
 			} else {
 				s.networkStats.AddBytes(uint64(n))
 			}
@@ -38,8 +38,7 @@ func (s *Session) onMessage() func(msg webrtc.DataChannelMessage) {
 
 func (s *Session) onClose() func() {
 	return func() {
-		fmt.Println("Done !")
-		fmt.Printf("Stats: %s\n", s.networkStats.String())
+		log.Infof("Stats: %s\n", s.networkStats.String())
 		close(s.done)
 	}
 }
