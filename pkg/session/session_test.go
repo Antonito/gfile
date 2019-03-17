@@ -6,8 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	sender "github.com/antonito/gfile/cmd/send/session"
-	"github.com/antonito/gfile/pkg/utils"
+	"github.com/antonito/gfile/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,12 +44,14 @@ func (b *Buffer) String() string {
 
 // Tests
 
-func Test_CreateSession(t *testing.T) {
+func Test_CreateReceiverSession(t *testing.T) {
 	assert := assert.New(t)
 	stream := &bytes.Buffer{}
 
-	ses := NewSession(stream)
-	assert.NotNil(ses)
+	sess := NewReceiverWith(ReceiverConfig{
+		Stream: stream,
+	})
+	assert.NotNil(sess)
 }
 
 func Test_TransferSmallMessage(t *testing.T) {
@@ -60,12 +61,12 @@ func Test_TransferSmallMessage(t *testing.T) {
 	clientStream := &Buffer{}
 	clientSDPProvider := &Buffer{}
 	clientSDPOutput := &Buffer{}
-	clientConfig := Config{
+	clientConfig := ReceiverConfig{
 		Stream:      clientStream,
 		SDPProvider: clientSDPProvider,
 		SDPOutput:   clientSDPOutput,
 	}
-	clientSession := NewSessionWith(clientConfig)
+	clientSession := NewReceiverWith(clientConfig)
 	assert.NotNil(clientSession)
 
 	// Create sender
@@ -75,12 +76,12 @@ func Test_TransferSmallMessage(t *testing.T) {
 	n, err := senderStream.WriteString("Hello World!\n")
 	assert.Nil(err)
 	assert.Equal(13, n) // Len "Hello World\n"
-	senderConfig := sender.Config{
+	senderConfig := SenderConfig{
 		Stream:      senderStream,
 		SDPProvider: senderSDPProvider,
 		SDPOutput:   senderSDPOutput,
 	}
-	senderSession := sender.NewSessionWith(senderConfig)
+	senderSession := NewSenderWith(senderConfig)
 	assert.NotNil(senderSession)
 
 	senderDone := make(chan struct{})

@@ -4,7 +4,7 @@ GO			?= go
 
 NAME		:= gfile
 
-PKG_LIST	:= $(go list ./... | grep -v /vendor/)
+PKG_LIST	:= $(shell go list ./... | grep -v /vendor/)
 
 deps:
 	@$(ECHO) "==> Installing deps ..."
