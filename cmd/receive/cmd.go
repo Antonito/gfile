@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/antonito/gfile/pkg/session"
+	"github.com/antonito/gfile/pkg/session/receiver"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -21,10 +21,10 @@ func handler(c *cli.Context) error {
 	}
 	defer f.Close()
 
-	sess := session.NewReceiverWith(session.ReceiverConfig{
+	sess := receiver.NewWith(receiver.Config{
 		Stream: f,
 	})
-	return sess.Connect()
+	return sess.Start()
 }
 
 // New creates the command

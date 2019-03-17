@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/antonito/gfile/internal/utils"
+	"github.com/antonito/gfile/pkg/session/common"
+	"github.com/antonito/gfile/pkg/session/receiver"
+	"github.com/antonito/gfile/pkg/session/sender"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,7 +51,7 @@ func Test_CreateReceiverSession(t *testing.T) {
 	assert := assert.New(t)
 	stream := &bytes.Buffer{}
 
-	sess := NewReceiverWith(ReceiverConfig{
+	sess := receiver.NewWith(receiver.Config{
 		Stream: stream,
 	})
 	assert.NotNil(sess)
@@ -61,12 +64,14 @@ func Test_TransferSmallMessage(t *testing.T) {
 	clientStream := &Buffer{}
 	clientSDPProvider := &Buffer{}
 	clientSDPOutput := &Buffer{}
-	clientConfig := ReceiverConfig{
-		Stream:      clientStream,
-		SDPProvider: clientSDPProvider,
-		SDPOutput:   clientSDPOutput,
+	clientConfig := receiver.Config{
+		Stream: clientStream,
+		Configuration: common.Configuration{
+			SDPProvider: clientSDPProvider,
+			SDPOutput:   clientSDPOutput,
+		},
 	}
-	clientSession := NewReceiverWith(clientConfig)
+	clientSession := receiver.NewWith(clientConfig)
 	assert.NotNil(clientSession)
 
 	// Create sender
@@ -76,18 +81,20 @@ func Test_TransferSmallMessage(t *testing.T) {
 	n, err := senderStream.WriteString("Hello World!\n")
 	assert.Nil(err)
 	assert.Equal(13, n) // Len "Hello World\n"
-	senderConfig := SenderConfig{
-		Stream:      senderStream,
-		SDPProvider: senderSDPProvider,
-		SDPOutput:   senderSDPOutput,
+	senderConfig := sender.Config{
+		Stream: senderStream,
+		Configuration: common.Configuration{
+			SDPProvider: senderSDPProvider,
+			SDPOutput:   senderSDPOutput,
+		},
 	}
-	senderSession := NewSenderWith(senderConfig)
+	senderSession := sender.NewWith(senderConfig)
 	assert.NotNil(senderSession)
 
 	senderDone := make(chan struct{})
 	go func() {
 		defer close(senderDone)
-		err := senderSession.Connect()
+		err := senderSession.Start()
 		assert.Nil(err)
 	}()
 
@@ -102,7 +109,7 @@ func Test_TransferSmallMessage(t *testing.T) {
 	clientDone := make(chan struct{})
 	go func() {
 		defer close(clientDone)
-		err := clientSession.Connect()
+		err := clientSession.Start()
 		assert.Nil(err)
 	}()
 

@@ -1,61 +1,13 @@
-package session
+package sender
 
 import (
 	"io"
 	"time"
 
-	"github.com/pions/webrtc"
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *sender) onConnectionStateChange() func(connectionState webrtc.ICEConnectionState) {
-	return func(connectionState webrtc.ICEConnectionState) {
-		log.Infof("ICE Connection State has changed: %s\n", connectionState.String())
-		if connectionState == webrtc.ICEConnectionStateDisconnected {
-			s.stopSending <- struct{}{}
-		}
-	}
-}
-
-func (s *sender) onOpenHandler() func() {
-	return func() {
-		s.networkStats.Start()
-		s.writeToNetwork()
-	}
-}
-
-func (s *sender) onCloseHandler() func() {
-	return func() {
-		s.close(true)
-	}
-}
-
-func (s *sender) close(calledFromCloseHandler bool) {
-	if !calledFromCloseHandler {
-		s.dataChannel.Close()
-	}
-
-	// Sometime, onCloseHandler is not invoked, so it's a work-around
-	s.doneCheckLock.Lock()
-	if s.doneCheck {
-		s.doneCheckLock.Unlock()
-		return
-	}
-	s.doneCheck = true
-	s.doneCheckLock.Unlock()
-
-	s.dumpStats()
-	close(s.done)
-}
-
-func (s *sender) dumpStats() {
-	log.Infof(`
-Disk   : %s
-Network: %s
-`, s.readingStats.String(), s.networkStats.String())
-}
-
-func (s *sender) readFile() {
+func (s *Session) readFile() {
 	log.Infof("Starting to read data...")
 	s.readingStats.Start()
 	defer func() {
@@ -88,7 +40,7 @@ func (s *sender) readFile() {
 	}
 }
 
-func (s *sender) writeToNetwork() {
+func (s *Session) writeToNetwork() {
 	log.Infof("Starting to send data...")
 	defer log.Infof("Stopped sending data...")
 
@@ -97,13 +49,13 @@ func (s *sender) writeToNetwork() {
 	for {
 		select {
 		case <-s.stopSending:
-			s.networkStats.Pause()
+			s.sess.NetworkStats.Pause()
 			log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 			return
 		case data := <-s.output:
 			if data.n == 0 {
 				// The channel is closed, nothing more to send
-				s.networkStats.Stop()
+				s.sess.NetworkStats.Stop()
 				s.close(false)
 				return
 			}
@@ -124,7 +76,7 @@ func (s *sender) writeToNetwork() {
 					log.Errorf("Error, cannot send to client: %v\n", err)
 					return
 				}
-				s.networkStats.AddBytes(uint64(cur.n))
+				s.sess.NetworkStats.AddBytes(uint64(cur.n))
 				s.msgToBeSent = s.msgToBeSent[1:]
 			}
 		}

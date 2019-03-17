@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/antonito/gfile/pkg/session"
+	"github.com/antonito/gfile/pkg/session/common"
+	"github.com/antonito/gfile/pkg/session/sender"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -19,10 +20,14 @@ func handler(c *cli.Context) error {
 		return err
 	}
 	defer f.Close()
-	sess := session.NewSenderWith(session.SenderConfig{
+	sess := sender.NewWith(sender.Config{
 		Stream: f,
+		Configuration: common.Configuration{
+			OnCompletion: func() {
+			},
+		},
 	})
-	return sess.Connect()
+	return sess.Start()
 }
 
 // New creates the command
