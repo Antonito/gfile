@@ -20,7 +20,7 @@ type session struct {
 	peerConnection *webrtc.PeerConnection
 	done           chan struct{}
 
-	networkStats stats.Stats
+	networkStats stats.Stats //nolint
 }
 
 func (s *session) createConnection(onConnectionStateChange func(connectionState webrtc.ICEConnectionState)) error {
