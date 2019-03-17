@@ -19,6 +19,98 @@ func Test_ReadStream(t *testing.T) {
 	assert.Nil(err)
 }
 
+func Test_StripSDP(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		sdp      string
+		expected string
+	}{
+		{
+			sdp:      "",
+			expected: "",
+		},
+		{
+			sdp: `v=0
+o=- 297292268 1552262038 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=fingerprint:sha-256 70:E0:B2:DA:F8:04:D6:0C:32:03:DF:CD:A8:70:EC:45:10:FF:66:6F:3D:72:B1:BA:4C:AF:FB:5E:BE:F9:CF:6A
+a=group:BUNDLE audio video data
+m=audio 9 UDP/TLS/RTP/SAVPF 111 9
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=mid:audio
+a=ice-ufrag:SNxNaqIiaNoDiCNM
+a=ice-pwd:dSZlwOEOKEmBfNiXCtpmPTOVJlwUCaFX
+a=rtcp-mux
+a=rtcp-rsize
+a=rtpmap:111 opus/48000/2
+a=fmtp:111 minptime=10;useinbandfec=1
+a=rtpmap:9 G722/8000
+a=recvonly
+a=candidate:foundation 1 udp 3776 192.168.100.207 61879 typ host generation 0
+a=candidate:foundation 2 udp 3776 192.168.100.207 61879 typ host generation 0
+a=end-of-candidates
+a=setup:actpass
+m=video 9 UDP/TLS/RTP/SAVPF 96 100 98
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=mid:video
+a=ice-ufrag:SNxNaqIiaNoDiCNM
+a=ice-pwd:dSZlwOEOKEmBfNiXCtpmPTOVJlwUCaFX
+a=rtcp-mux
+a=rtcp-rsize
+a=rtpmap:96 VP8/90000
+a=rtpmap:100 H264/90000
+a=fmtp:100 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f
+a=rtpmap:98 VP9/90000
+a=recvonly
+a=candidate:foundation 1 udp 3776 192.168.100.207 61879 typ host generation 0
+a=candidate:foundation 2 udp 3776 192.168.100.207 61879 typ host generation 0
+a=end-of-candidates
+a=setup:actpass
+m=application 9 DTLS/SCTP 5000
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=mid:data
+a=sendrecv
+a=sctpmap:5000 webrtc-datachannel 1024
+a=ice-ufrag:SNxNaqIiaNoDiCNM
+a=ice-pwd:dSZlwOEOKEmBfNiXCtpmPTOVJlwUCaFX
+a=candidate:foundation 1 udp 3776 192.168.100.207 61879 typ host generation 0
+a=candidate:foundation 2 udp 3776 192.168.100.207 61879 typ host generation 0
+a=end-of-candidates
+a=setup:actpass
+`,
+			expected: `v=0
+o=- 297292268 1552262038 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=fingerprint:sha-256 70:E0:B2:DA:F8:04:D6:0C:32:03:DF:CD:A8:70:EC:45:10:FF:66:6F:3D:72:B1:BA:4C:AF:FB:5E:BE:F9:CF:6A
+a=group:BUNDLE data
+a=setup:actpass
+m=application 9 DTLS/SCTP 5000
+c=IN IP4 0.0.0.0
+a=setup:actpass
+a=mid:data
+a=sendrecv
+a=sctpmap:5000 webrtc-datachannel 1024
+a=ice-ufrag:SNxNaqIiaNoDiCNM
+a=ice-pwd:dSZlwOEOKEmBfNiXCtpmPTOVJlwUCaFX
+a=candidate:foundation 1 udp 3776 192.168.100.207 61879 typ host generation 0
+a=candidate:foundation 2 udp 3776 192.168.100.207 61879 typ host generation 0
+a=end-of-candidates
+a=setup:actpass
+`,
+		},
+	}
+
+	for _, cur := range tests {
+		assert.Equal(cur.expected, StripSDP(cur.sdp))
+	}
+}
+
 func Test_Encode(t *testing.T) {
 	assert := assert.New(t)
 

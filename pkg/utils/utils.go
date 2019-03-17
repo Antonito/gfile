@@ -51,6 +51,7 @@ func StripSDP(originalSDP string) string {
 
 	finalSDP = beginningSdp + endSdp
 	finalSDP = strings.Replace(finalSDP, "\r\n\r\n", "\r\n", -1)
+	finalSDP = strings.Replace(finalSDP, "\n\n", "\n", -1)
 	return finalSDP
 }
 
