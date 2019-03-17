@@ -39,7 +39,7 @@ func init() {
 	setupLogger()
 }
 
-func main() {
+func run(args []string) error {
 	app := cli.NewApp()
 	app.Name = "gfile"
 	app.Version = "0.1"
@@ -50,7 +50,14 @@ func main() {
 	log.Tracef("Starting %s v%v\n", app.Name, app.Version)
 
 	cmd.Install(app)
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(args); err != nil {
+		return err
+	}
+	return nil
+}
+
+func main() {
+	if err := run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
