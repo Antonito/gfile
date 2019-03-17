@@ -41,7 +41,6 @@ type sender struct {
 
 	// Stats/infos
 	readingStats stats.Stats
-	networkStats stats.Stats
 }
 
 func newSender(f io.Reader) *sender {

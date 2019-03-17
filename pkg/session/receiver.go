@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/antonito/gfile/pkg/stats"
 	"github.com/pions/webrtc"
 )
 
@@ -17,9 +16,8 @@ type ReceiverConfig struct {
 
 type receiver struct {
 	session
-	stream       io.Writer
-	msgChannel   chan webrtc.DataChannelMessage
-	networkStats stats.Stats
+	stream     io.Writer
+	msgChannel chan webrtc.DataChannelMessage
 }
 
 func newReceiver(f io.Writer) *receiver {

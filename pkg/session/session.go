@@ -9,6 +9,7 @@ import (
 	"github.com/pions/webrtc"
 )
 
+// Session defines a common interface for sender and receiver sessions
 type Session interface {
 	Connect() error
 }
@@ -17,9 +18,7 @@ type session struct {
 	sdpInput       io.Reader
 	sdpOutput      io.Writer
 	peerConnection *webrtc.PeerConnection
-
-	msgChannel chan webrtc.DataChannelMessage
-	done       chan struct{}
+	done           chan struct{}
 
 	networkStats stats.Stats
 }
