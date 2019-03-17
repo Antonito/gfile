@@ -2,63 +2,89 @@ package session
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
+	"time"
 
+	sender "github.com/antonito/gfile/cmd/send/session"
+	"github.com/antonito/gfile/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_TransferSmallMessage(t *testing.T) {
+func Test_CreateSession(t *testing.T) {
 	assert := assert.New(t)
 	stream := &bytes.Buffer{}
-	sdpAnswer := &bytes.Buffer{}
-	sdpInput := &bytes.Buffer{}
 
 	ses := NewSession(stream)
 	assert.NotNil(ses)
-	ses.sdpOutput = sdpAnswer
-	ses.sdpInput = sdpInput
+}
 
-	// Start emitter
-	/*
-		sdpChan := make(chan *bytes.Buffer)
-		go func() {
-			sdpOffer := &bytes.Buffer{}
-			senderStream := &bytes.Buffer{}
-			_, err := senderStream.WriteString("Hello World\n")
-			assert.Nil(err)
-			sendSes := sender.NewSession(senderStream)
-			assert.NotNil(sendSes)
-			// sendSes.sdpOutput = sdpOffer
-			sdpChan <- sdpOffer
+func Test_TransferSmallMessage(t *testing.T) {
+	assert := assert.New(t)
 
-			// Send SDP whenever possible
-			go func() {
-				sdp, err := sdpOffer.ReadString('\n')
-				assert.Nil(err)
+	// Create client receiver
+	clientStream := &bytes.Buffer{}
+	clientSDPProvider := &bytes.Buffer{}
+	clientSDPOutput := &bytes.Buffer{}
+	clientConfig := Config{
+		Stream:      clientStream,
+		SDPProvider: clientSDPProvider,
+		SDPOutput:   clientSDPOutput,
+	}
+	clientSession := NewSessionWith(clientConfig)
+	assert.NotNil(clientSession)
 
-				client := &http.Client{}
-				req, err := http.NewRequest("POST", "http://localhost:8080/sdp", strings.NewReader(sdp))
-				assert.Nil(err)
-				resp, err := client.Do(req)
-				assert.Nil(err)
-				defer resp.Body.Close()
-				body, _ := ioutil.ReadAll(resp.Body)
-				assert.Equal(200, resp.StatusCode)
-				assert.Equal("done", string(body))
-			}()
+	// Create sender
+	senderStream := &bytes.Buffer{}
+	senderSDPProvider := &bytes.Buffer{}
+	senderSDPOutput := &bytes.Buffer{}
+	n, err := senderStream.WriteString("Hello World!\n")
+	assert.Nil(err)
+	assert.Equal(13, n) // Len "Hello World\n"
+	senderConfig := sender.Config{
+		Stream:      senderStream,
+		SDPProvider: senderSDPProvider,
+		SDPOutput:   senderSDPOutput,
+	}
+	senderSession := sender.NewSessionWith(senderConfig)
+	assert.NotNil(senderSession)
 
-			err = sendSes.Connect()
-			assert.Nil(err)
-		}()
-
-		sdp, err := (<-sdpChan).ReadString('\n')
+	senderDone := make(chan struct{})
+	go func() {
+		defer close(senderDone)
+		err := senderSession.Connect()
 		assert.Nil(err)
-		_, err = sdpInput.WriteString(sdp)
-		assert.Nil(err)
+	}()
+	time.Sleep(1 * time.Second) // TODO: Improve reliability
 
-		err = ses.Connect()
-		assert.Nil(err)
+	// Get SDP from sender and send it to the client
+	sdp, err := utils.MustReadStream(senderSDPOutput)
+	assert.Nil(err)
+	sdp += "\n"
+	n, err = clientSDPProvider.WriteString(sdp)
+	assert.Nil(err)
+	assert.Equal(len(sdp), n)
 
-		assert.Equal("Done", stream.String())
-	*/
+	clientDone := make(chan struct{})
+	go func() {
+		defer close(clientDone)
+		err := clientSession.Connect()
+		assert.Nil(err)
+	}()
+	time.Sleep(1 * time.Second) // TODO: Improve reliability
+
+	// Get SDP from client and send it to the sender
+	sdp, err = utils.MustReadStream(clientSDPOutput)
+	assert.Nil(err)
+	n, err = senderSDPProvider.WriteString(sdp)
+	assert.Nil(err)
+	assert.Equal(len(sdp), n)
+
+	fmt.Println("Waiting for everyone to be done...")
+	<-senderDone
+	<-clientDone
+
+	msg, err := clientStream.ReadString('\n')
+	assert.Nil(err)
+	assert.Equal("Hello World!\n", msg)
 }
