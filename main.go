@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func init() {
+func setupLogger() {
 	log.SetOutput(os.Stdout)
 
 	logLevel := log.WarnLevel
@@ -33,6 +33,10 @@ func init() {
 		}
 	}
 	log.SetLevel(logLevel)
+}
+
+func init() {
+	setupLogger()
 }
 
 func main() {
