@@ -3,13 +3,47 @@ package session
 import (
 	"bytes"
 	"fmt"
+	"sync"
 	"testing"
-	"time"
 
 	sender "github.com/antonito/gfile/cmd/send/session"
 	"github.com/antonito/gfile/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
+
+// Helper
+type Buffer struct {
+	b bytes.Buffer
+	m sync.Mutex
+}
+
+func (b *Buffer) Read(p []byte) (n int, err error) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.b.Read(p)
+}
+func (b *Buffer) ReadString(delim byte) (line string, err error) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.b.ReadString(delim)
+}
+func (b *Buffer) Write(p []byte) (n int, err error) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.b.Write(p)
+}
+func (b *Buffer) WriteString(s string) (n int, err error) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.b.WriteString(s)
+}
+func (b *Buffer) String() string {
+	b.m.Lock()
+	defer b.m.Unlock()
+	return b.b.String()
+}
+
+// Tests
 
 func Test_CreateSession(t *testing.T) {
 	assert := assert.New(t)
@@ -23,9 +57,9 @@ func Test_TransferSmallMessage(t *testing.T) {
 	assert := assert.New(t)
 
 	// Create client receiver
-	clientStream := &bytes.Buffer{}
-	clientSDPProvider := &bytes.Buffer{}
-	clientSDPOutput := &bytes.Buffer{}
+	clientStream := &Buffer{}
+	clientSDPProvider := &Buffer{}
+	clientSDPOutput := &Buffer{}
 	clientConfig := Config{
 		Stream:      clientStream,
 		SDPProvider: clientSDPProvider,
@@ -35,9 +69,9 @@ func Test_TransferSmallMessage(t *testing.T) {
 	assert.NotNil(clientSession)
 
 	// Create sender
-	senderStream := &bytes.Buffer{}
-	senderSDPProvider := &bytes.Buffer{}
-	senderSDPOutput := &bytes.Buffer{}
+	senderStream := &Buffer{}
+	senderSDPProvider := &Buffer{}
+	senderSDPOutput := &Buffer{}
 	n, err := senderStream.WriteString("Hello World!\n")
 	assert.Nil(err)
 	assert.Equal(13, n) // Len "Hello World\n"
@@ -55,7 +89,6 @@ func Test_TransferSmallMessage(t *testing.T) {
 		err := senderSession.Connect()
 		assert.Nil(err)
 	}()
-	time.Sleep(1 * time.Second) // TODO: Improve reliability
 
 	// Get SDP from sender and send it to the client
 	sdp, err := utils.MustReadStream(senderSDPOutput)
@@ -71,7 +104,6 @@ func Test_TransferSmallMessage(t *testing.T) {
 		err := clientSession.Connect()
 		assert.Nil(err)
 	}()
-	time.Sleep(1 * time.Second) // TODO: Improve reliability
 
 	// Get SDP from client and send it to the sender
 	sdp, err = utils.MustReadStream(clientSDPOutput)

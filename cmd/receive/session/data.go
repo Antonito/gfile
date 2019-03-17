@@ -16,6 +16,7 @@ func (s *Session) receiveData() {
 		select {
 		case <-s.done:
 			s.networkStats.Stop()
+			log.Infof("Stats: %s\n", s.networkStats.String())
 			return
 		case msg := <-s.msgChannel:
 			n, err := s.stream.Write(msg.Data)
@@ -38,7 +39,6 @@ func (s *Session) onMessage() func(msg webrtc.DataChannelMessage) {
 
 func (s *Session) onClose() func() {
 	return func() {
-		log.Infof("Stats: %s\n", s.networkStats.String())
 		close(s.done)
 	}
 }
