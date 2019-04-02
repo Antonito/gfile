@@ -2,7 +2,6 @@ package sender
 
 import (
 	"io"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -40,45 +39,42 @@ func (s *Session) readFile() {
 	}
 }
 
-func (s *Session) writeToNetwork() {
-	log.Infof("Starting to send data...")
-	defer log.Infof("Stopped sending data...")
-
-	currentTime := time.Now()
-
-	for {
+func (s *Session) onBufferedAmountLow() func() {
+	return func() {
 		select {
-		case <-s.stopSending:
-			s.sess.NetworkStats.Pause()
-			log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
-			return
 		case data := <-s.output:
-			if data.n == 0 {
-				// The channel is closed, nothing more to send
+			if data.n != 0 {
+				s.msgToBeSent = append(s.msgToBeSent, data)
+			} else if len(s.msgToBeSent) == 0 && s.dataChannel.BufferedAmount() == 0 {
 				s.sess.NetworkStats.Stop()
 				s.close(false)
 				return
 			}
+		}
 
-			// Limit upload speed
-			triggered := time.Now()
-			if triggered.Sub(currentTime) < 1e8*time.Microsecond {
-				time.Sleep((1 * time.Microsecond) - (triggered.Sub(currentTime)))
+		for len(s.msgToBeSent) != 0 {
+			cur := s.msgToBeSent[0]
+			if err := s.dataChannel.Send(cur.buff); err != nil {
+				log.Errorf("Error, cannot send to client: %v\n", err)
+				return
 			}
-			currentTime = triggered
+			s.sess.NetworkStats.AddBytes(uint64(cur.n))
+			s.msgToBeSent = s.msgToBeSent[1:]
+		}
+	}
+}
 
-			s.msgToBeSent = append(s.msgToBeSent, data)
+func (s *Session) writeToNetwork() {
+	// Set callback, as transfer may be paused
+	s.dataChannel.OnBufferedAmountLow(s.onBufferedAmountLow())
 
-			for len(s.msgToBeSent) != 0 {
-				cur := s.msgToBeSent[0]
-				// Writing packet
-				if err := s.dataChannel.Send(cur.buff); err != nil {
-					log.Errorf("Error, cannot send to client: %v\n", err)
-					return
-				}
-				s.sess.NetworkStats.AddBytes(uint64(cur.n))
-				s.msgToBeSent = s.msgToBeSent[1:]
-			}
+	for {
+		select {
+		case <-s.stopSending:
+			s.dataChannel.OnBufferedAmountLow(nil)
+			s.sess.NetworkStats.Pause()
+			log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
+			return
 		}
 	}
 }

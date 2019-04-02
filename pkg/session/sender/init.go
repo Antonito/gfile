@@ -5,6 +5,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	bufferThreshold = 512 * 1024 // 512kB
+)
+
 // Start initializes the connection and the file transfer
 func (s *Session) Start() error {
 	if err := s.sess.CreateConnection(s.onConnectionStateChange()); err != nil {
@@ -38,9 +42,14 @@ func (s *Session) createDataChannel() error {
 	if err != nil {
 		return err
 	}
-	go s.readFile()
+
 	s.dataChannel = dataChannel
+	s.dataChannel.OnBufferedAmountLow(s.onBufferedAmountLow())
+	s.dataChannel.SetBufferedAmountLowThreshold(bufferThreshold)
 	s.dataChannel.OnOpen(s.onOpenHandler())
 	s.dataChannel.OnClose(s.onCloseHandler())
+
+	go s.readFile()
+
 	return nil
 }

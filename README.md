@@ -42,6 +42,20 @@ echo "$SDP" | gfile receive -o filename
 -   A base64 encoded SDP will appear, send it to the remote client
 -   The file transfer should start
 
+### Benchmark
+
+`gfile` is able to benchmark the network speed between 2 clients (1 _master_ and 1 _slave_) with the `bench` command.
+For detailed instructions, see `Sender` and `Receiver` instructions.
+
+#### Master
+```bash
+# Run as 'master'
+gfile bench -m
+
+# Run as 'slave'
+echo "$SDP" |  gfile bench
+```
+
 ## Contributors
 
 -   Antoine Baché ([https://github.com/Antonito](https://github.com/Antonito)) **Original author**

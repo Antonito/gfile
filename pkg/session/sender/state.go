@@ -17,6 +17,10 @@ func (s *Session) onConnectionStateChange() func(connectionState webrtc.ICEConne
 func (s *Session) onOpenHandler() func() {
 	return func() {
 		s.sess.NetworkStats.Start()
+
+		log.Infof("Starting to send data...")
+		defer log.Infof("Stopped sending data...")
+
 		s.writeToNetwork()
 	}
 }
