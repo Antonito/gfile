@@ -15,3 +15,5 @@ build/
 gfile
 dist/
 cover/
+
+*.wasm

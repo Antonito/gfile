@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/darkly/bootstrap.min.css"
+            rel="stylesheet" integrity="sha384-w+8Gqjk9Cuo6XH9HKHG5t5I1VR4YBNdPt/29vwgfZR485eoEJZ8rJRbm3TR32P6k"
+            crossorigin="anonymous">
+        <script src="wasm_exec.js"></script>
+        <script>
+            const go = new Go();
+
+            const init = async () => {
+                const response = await fetch("main.wasm");
+                const buffer = await response.arrayBuffer();
+    
+                WebAssembly.instantiate(buffer, go.importObject).then((result) => {
+                    go.run(result.instance);
+                });
+            }
+            init()
+        </script>
+    </head>
+
+
+    <body>
+        <div class="container">
+            <h1 class="display-2">gfile Web Client</h1>
+
+            <!-- Menu code-->
+            <div class="jumbotron" id="menu-container">
+                <p class="lead">Send a file directly to another computer, safely, without any third-party</p>
+                <hr class="my-2">
+
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" onclick="onMenuSendAFileClick()">Send a file</button>
+                    <h5 class="text-muted">or</h5>
+                    <button class="btn btn-primary btn-lg" onclick="onMenuReceiveFileClick()">Receive a file</button>
+                </div>
+            </div>
+
+            <!-- Sender code-->
+            <div class="jumbotron" id="menu-send-container" hidden>
+                <span id="gfile-send">
+                    <p class="lead">Send a file</p>
+                    <div class="input-group mb-3">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="send-file-input">
+                            <label class="custom-file-label" for="send-file-input">Choose file</label>
+                        </div>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="send-sdpOutput">Send this SDP to the other client:</label>
+                        <textarea class="form-control" readonly="" id="send-sdpOutput" rows="3"></textarea>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="send-sdpInput">Paste the remote SDP here:</label>
+                        <textarea class="form-control" id="send-sdpInput" rows="3"></textarea>
+                    </div>
+    
+                    <div class="text-center">
+                        <button class="btn btn-primary btn-lg" onclick="onSendFileButtonClick()">Send file</button>
+                    </div>
+                </span>
+            </div>
+
+            <!-- Receiver code-->
+            <div class="jumbotron" id="menu-receive-container" hidden>
+                <p class="lead">Receive a file</p>
+
+                <div class="form-group">
+                    <label for="receive-sdpInput">Paste the remote SDP here:</label>
+                    <textarea class="form-control" id="receive-sdpInput" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="receive-sdpOutput">Send this SDP to the other client:</label>
+                    <textarea class="form-control" readonly="" id="receive-sdpOutput" rows="3"></textarea>
+                </div>
+
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg" onclick="onReceiveFileButtonClick()">Receive file</button>
+                </div>
+            </div>
+
+        </div>
+    </body>
+</html>

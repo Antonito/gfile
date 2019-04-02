@@ -22,8 +22,9 @@ type outputMsg struct {
 
 // Session is a sender session
 type Session struct {
-	sess   internalSess.Session
-	stream io.Reader
+	sess        internalSess.Session
+	stream      io.Reader
+	initialized bool
 
 	dataChannel *webrtc.DataChannel
 	dataBuff    []byte
@@ -43,6 +44,7 @@ func new(s internalSess.Session, f io.Reader) *Session {
 	return &Session{
 		sess:        s,
 		stream:      f,
+		initialized: false,
 		dataBuff:    make([]byte, senderBuffSize),
 		stopSending: make(chan struct{}, 1),
 		output:      make(chan outputMsg, senderBuffSize*10),
@@ -64,4 +66,9 @@ type Config struct {
 // NewWith createa a new sender Session with custom configuration
 func NewWith(c Config) *Session {
 	return new(internalSess.New(c.SDPProvider, c.SDPOutput), c.Stream)
+}
+
+// SetStream changes the stream, useful for WASM integration
+func (s *Session) SetStream(stream io.Reader) {
+	s.stream = stream
 }

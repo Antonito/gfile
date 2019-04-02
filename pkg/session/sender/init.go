@@ -9,8 +9,12 @@ const (
 	bufferThreshold = 512 * 1024 // 512kB
 )
 
-// Start initializes the connection and the file transfer
-func (s *Session) Start() error {
+// Initialize creates the connection, the datachannel and creates the  offer
+func (s *Session) Initialize() error {
+	if s.initialized {
+		return nil
+	}
+
 	if err := s.sess.CreateConnection(s.onConnectionStateChange()); err != nil {
 		log.Errorln(err)
 		return err
@@ -23,6 +27,17 @@ func (s *Session) Start() error {
 		log.Errorln(err)
 		return err
 	}
+
+	s.initialized = true
+	return nil
+}
+
+// Start the connection and the file transfer
+func (s *Session) Start() error {
+	if err := s.Initialize(); err != nil {
+		return err
+	}
+	go s.readFile()
 	if err := s.sess.ReadSDP(); err != nil {
 		log.Errorln(err)
 		return err
@@ -48,8 +63,6 @@ func (s *Session) createDataChannel() error {
 	s.dataChannel.SetBufferedAmountLowThreshold(bufferThreshold)
 	s.dataChannel.OnOpen(s.onOpenHandler())
 	s.dataChannel.OnClose(s.onCloseHandler())
-
-	go s.readFile()
 
 	return nil
 }
