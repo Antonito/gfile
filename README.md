@@ -47,7 +47,6 @@ echo "$SDP" | gfile receive -o filename
 `gfile` is able to benchmark the network speed between 2 clients (1 _master_ and 1 _slave_) with the `bench` command.
 For detailed instructions, see `Sender` and `Receiver` instructions.
 
-#### Master
 ```bash
 # Run as 'master'
 gfile bench -m
@@ -56,6 +55,15 @@ gfile bench -m
 echo "$SDP" |  gfile bench
 ```
 
+### Debug
+
+In order to obtain a more verbose output, it is possible to define the logging level via the `GFILE_LOG` environment variable.
+
+> Example: `export GFILE_LOG="TRACE"`
+> See function `setupLogger` in  `main.go` for more information
+
 ## Contributors
 
 -   Antoine Baché ([https://github.com/Antonito](https://github.com/Antonito)) **Original author**
+
+Special thanks to [Sean DuBois](https://github.com/Sean-Der) for his help with [pions/webrtc](https://github.com/pions/webrtc) and [Yutaka Takeda](https://github.com/enobufs) for his work on [pions/sctp](https://github.com/pions/sctp)
