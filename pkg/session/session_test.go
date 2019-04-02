@@ -3,47 +3,15 @@ package session
 import (
 	"bytes"
 	"fmt"
-	"sync"
 	"testing"
 
+	"github.com/antonito/gfile/internal/buffer"
 	"github.com/antonito/gfile/internal/utils"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/session/receiver"
 	"github.com/antonito/gfile/pkg/session/sender"
 	"github.com/stretchr/testify/assert"
 )
-
-// Helper
-type Buffer struct {
-	b bytes.Buffer
-	m sync.Mutex
-}
-
-func (b *Buffer) Read(p []byte) (n int, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.Read(p)
-}
-func (b *Buffer) ReadString(delim byte) (line string, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.ReadString(delim)
-}
-func (b *Buffer) Write(p []byte) (n int, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.Write(p)
-}
-func (b *Buffer) WriteString(s string) (n int, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.WriteString(s)
-}
-func (b *Buffer) String() string {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.String()
-}
 
 // Tests
 
@@ -61,9 +29,9 @@ func Test_TransferSmallMessage(t *testing.T) {
 	assert := assert.New(t)
 
 	// Create client receiver
-	clientStream := &Buffer{}
-	clientSDPProvider := &Buffer{}
-	clientSDPOutput := &Buffer{}
+	clientStream := &buffer.Buffer{}
+	clientSDPProvider := &buffer.Buffer{}
+	clientSDPOutput := &buffer.Buffer{}
 	clientConfig := receiver.Config{
 		Stream: clientStream,
 		Configuration: common.Configuration{
@@ -75,9 +43,9 @@ func Test_TransferSmallMessage(t *testing.T) {
 	assert.NotNil(clientSession)
 
 	// Create sender
-	senderStream := &Buffer{}
-	senderSDPProvider := &Buffer{}
-	senderSDPOutput := &Buffer{}
+	senderStream := &buffer.Buffer{}
+	senderSDPProvider := &buffer.Buffer{}
+	senderSDPOutput := &buffer.Buffer{}
 	n, err := senderStream.WriteString("Hello World!\n")
 	assert.Nil(err)
 	assert.Equal(13, n) // Len "Hello World\n"

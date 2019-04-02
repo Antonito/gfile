@@ -2,6 +2,7 @@ package bench
 
 import (
 	"sync"
+	"time"
 
 	internalSess "github.com/antonito/gfile/internal/session"
 	"github.com/antonito/gfile/pkg/session/common"
@@ -9,11 +10,22 @@ import (
 	"github.com/pions/webrtc"
 )
 
+const (
+	bufferThresholdDefault   = 64 * 1024 // 64kB
+	testDurationDefault      = 20 * time.Second
+	testDurationErrorDefault = (testDurationDefault * 10) / 7
+)
+
 // Session is a benchmark session
 type Session struct {
 	sess   internalSess.Session
 	master bool
 	wg     sync.WaitGroup
+
+	// Settings
+	bufferThreshold   uint64
+	testDuration      time.Duration
+	testDurationError time.Duration
 
 	startPhase2          chan struct{}
 	uploadDataChannel    *webrtc.DataChannel
@@ -27,6 +39,10 @@ func new(s internalSess.Session, isMaster bool) *Session {
 	return &Session{
 		sess:   s,
 		master: isMaster,
+
+		bufferThreshold:   bufferThresholdDefault,
+		testDuration:      testDurationDefault,
+		testDurationError: testDurationErrorDefault,
 
 		startPhase2:  make(chan struct{}),
 		downloadDone: make(chan bool),

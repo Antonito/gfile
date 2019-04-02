@@ -9,12 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	bufferThreshold   = 64 * 1024 // 64kB
-	testDuration      = 20 * time.Second
-	testDurationError = (testDuration * 10) / 7
-)
-
 func (s *Session) onOpenUploadHandler(dc *webrtc.DataChannel) func() {
 	return func() {
 		if !s.master {
@@ -29,17 +23,26 @@ func (s *Session) onOpenUploadHandler(dc *webrtc.DataChannel) func() {
 		rand.Read(token)
 
 		s.uploadNetworkStats.Start()
-		dc.SetBufferedAmountLowThreshold(bufferThreshold)
-		dc.OnBufferedAmountLow(func() {
-			if err := dc.Send(token); err == nil {
-				s.uploadNetworkStats.AddBytes(lenToken)
-			}
-		})
 
-		fmt.Printf("Uploading random datas ... (%d s)\n", int(testDuration.Seconds()))
-		timeout := time.After(testDuration)
-		timeoutErr := time.After(testDurationError)
-		dc.Send(token)
+		// Useful for unit tests
+		if dc != nil {
+			dc.SetBufferedAmountLowThreshold(s.bufferThreshold)
+			dc.OnBufferedAmountLow(func() {
+				if err := dc.Send(token); err == nil {
+					s.uploadNetworkStats.AddBytes(lenToken)
+				}
+			})
+		} else {
+			log.Warningln("No DataChannel provided")
+		}
+
+		fmt.Printf("Uploading random datas ... (%d s)\n", int(s.testDuration.Seconds()))
+		timeout := time.After(s.testDuration)
+		timeoutErr := time.After(s.testDurationError)
+
+		if dc != nil {
+			dc.Send(token)
+		}
 	SENDING_LOOP:
 		for {
 			select {
@@ -53,7 +56,10 @@ func (s *Session) onOpenUploadHandler(dc *webrtc.DataChannel) func() {
 			}
 		}
 		s.uploadNetworkStats.Stop()
-		dc.Close()
+
+		if dc != nil {
+			dc.Close()
+		}
 
 		if s.master {
 			close(s.startPhase2)

@@ -21,13 +21,18 @@ func (s *Session) onOpenHandlerDownload(dc *webrtc.DataChannel) func() {
 
 		s.downloadNetworkStats.Start()
 
-		dc.OnMessage(func(msg webrtc.DataChannelMessage) {
-			s.downloadNetworkStats.AddBytes(uint64(len(msg.Data)))
-		})
+		// Useful for unit tests
+		if dc != nil {
+			dc.OnMessage(func(msg webrtc.DataChannelMessage) {
+				s.downloadNetworkStats.AddBytes(uint64(len(msg.Data)))
+			})
+		} else {
+			log.Warningln("No DataChannel provided")
+		}
 
-		timeoutErr := time.After(testDurationError)
+		timeoutErr := time.After(s.testDurationError)
 
-		fmt.Printf("Downloading random datas ... (%d s)\n", int(testDuration.Seconds()))
+		fmt.Printf("Downloading random datas ... (%d s)\n", int(s.testDuration.Seconds()))
 	DOWNLOAD_LOOP:
 		for {
 			select {
