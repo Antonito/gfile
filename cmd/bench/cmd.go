@@ -25,7 +25,7 @@ func New() cli.Command {
 	log.Traceln("Installing 'bench' command")
 	return cli.Command{
 		Name:    "bench",
-		Aliases: []string{"sb"},
+		Aliases: []string{"b"},
 		Usage:   "Benchmark the connexion",
 		Action:  handler,
 		Flags: []cli.Flag{

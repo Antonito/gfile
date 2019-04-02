@@ -62,6 +62,8 @@ func (s *Session) CreateConnection(onConnectionStateChange func(connectionState 
 // ReadSDP from the SDP input stream
 func (s *Session) ReadSDP() error {
 	var sdp webrtc.SessionDescription
+
+	fmt.Println("Please, paste the remote SDP:")
 	for {
 		encoded, err := utils.MustReadStream(s.sdpInput)
 		if err == nil {

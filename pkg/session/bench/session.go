@@ -1,8 +1,6 @@
 package bench
 
 import (
-	"fmt"
-
 	"github.com/pions/webrtc"
 	log "github.com/sirupsen/logrus"
 )
@@ -40,7 +38,6 @@ func (s *Session) createMasterSession() error {
 		return err
 	}
 
-	fmt.Println("Please, paste the remote SDP:")
 	if err := s.sess.ReadSDP(); err != nil {
 		log.Errorln(err)
 		return err
@@ -49,13 +46,11 @@ func (s *Session) createMasterSession() error {
 }
 
 func (s *Session) createSlaveSession() error {
-	fmt.Println("Please, paste the remote SDP:")
 	if err := s.sess.ReadSDP(); err != nil {
 		log.Errorln(err)
 		return err
 	}
 
-	fmt.Println("SDP:")
 	if err := s.sess.CreateAnswer(); err != nil {
 		log.Errorln(err)
 		return err

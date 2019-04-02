@@ -2,7 +2,6 @@ package bench
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pions/webrtc"
 	log "github.com/sirupsen/logrus"
@@ -30,16 +29,10 @@ func (s *Session) onOpenHandlerDownload(dc *webrtc.DataChannel) func() {
 			log.Warningln("No DataChannel provided")
 		}
 
-		timeoutErr := time.After(s.testDurationError)
-
 		fmt.Printf("Downloading random datas ... (%d s)\n", int(s.testDuration.Seconds()))
 	DOWNLOAD_LOOP:
 		for {
 			select {
-			case <-timeoutErr:
-				log.Error("Download time'd out")
-				break DOWNLOAD_LOOP
-
 			case <-s.downloadDone:
 				log.Traceln("Done downloading")
 				break DOWNLOAD_LOOP
