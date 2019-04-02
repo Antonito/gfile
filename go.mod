@@ -15,7 +15,6 @@ require (
 	github.com/pions/webrtc v1.2.1-0.20190317055316-ab816402cf5f
 	github.com/sirupsen/logrus v1.4.0
 	github.com/stretchr/testify v1.3.0
-	gitlab.com/manacore-backend/lib v0.0.0-20190329232818-ce1978f122b5
 	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a // indirect
 	golang.org/x/net v0.0.0-20190320064053-1272bf9dcd53 // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6 // indirect

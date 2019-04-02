@@ -3,7 +3,7 @@ package bench
 import (
 	"github.com/antonito/gfile/pkg/session/bench"
 	"github.com/antonito/gfile/pkg/session/common"
-	"gitlab.com/manacore-backend/lib/pkg/log"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 )
 
