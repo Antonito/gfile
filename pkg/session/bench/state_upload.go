@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pions/webrtc"
+	"github.com/pion/webrtc"
 	log "github.com/sirupsen/logrus"
 )
 

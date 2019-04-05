@@ -1,12 +1,15 @@
 package receiver
 
 import (
-	"github.com/pions/webrtc"
+	"github.com/pion/webrtc"
 	log "github.com/sirupsen/logrus"
 )
 
-// Start initializes the connection and the file transfer
-func (s *Session) Start() error {
+// Initialize creates the connection, the datachannel and creates the  offer
+func (s *Session) Initialize() error {
+	if s.initialized {
+		return nil
+	}
 	if err := s.sess.CreateConnection(s.onConnectionStateChange()); err != nil {
 		log.Errorln(err)
 		return err
@@ -18,6 +21,16 @@ func (s *Session) Start() error {
 	}
 	if err := s.sess.CreateAnswer(); err != nil {
 		log.Errorln(err)
+		return err
+	}
+
+	s.initialized = true
+	return nil
+}
+
+// Start initializes the connection and the file transfer
+func (s *Session) Start() error {
+	if err := s.Initialize(); err != nil {
 		return err
 	}
 

@@ -6,12 +6,13 @@ import (
 
 	"github.com/antonito/gfile/internal/buffer"
 	"github.com/antonito/gfile/internal/utils"
+	"github.com/antonito/gfile/pkg/session"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/session/receiver"
 	"github.com/antonito/gfile/pkg/session/sender"
 )
 
-// var globalSess Session
+var globalSess session.Session
 
 func getElementByID(id string) js.Value {
 	return js.Global().Get("document").Call("getElementById", id)

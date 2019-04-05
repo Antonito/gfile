@@ -1,7 +1,7 @@
 package bench
 
 import (
-	"github.com/pions/webrtc"
+	"github.com/pion/webrtc"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -66,4 +66,4 @@ In order to obtain a more verbose output, it is possible to define the logging l
 
 -   Antoine Baché ([https://github.com/Antonito](https://github.com/Antonito)) **Original author**
 
-Special thanks to [Sean DuBois](https://github.com/Sean-Der) for his help with [pions/webrtc](https://github.com/pions/webrtc) and [Yutaka Takeda](https://github.com/enobufs) for his work on [pions/sctp](https://github.com/pions/sctp)
+Special thanks to [Sean DuBois](https://github.com/Sean-Der) for his help with [pion/webrtc](https://github.com/pion/webrtc) and [Yutaka Takeda](https://github.com/enobufs) for his work on [pion/sctp](https://github.com/pion/sctp)

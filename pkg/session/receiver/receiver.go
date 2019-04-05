@@ -5,21 +5,23 @@ import (
 
 	internalSess "github.com/antonito/gfile/internal/session"
 	"github.com/antonito/gfile/pkg/session/common"
-	"github.com/pions/webrtc"
+	"github.com/pion/webrtc"
 )
 
 // Session is a receiver session
 type Session struct {
-	sess       internalSess.Session
-	stream     io.Writer
-	msgChannel chan webrtc.DataChannelMessage
+	sess        internalSess.Session
+	stream      io.Writer
+	msgChannel  chan webrtc.DataChannelMessage
+	initialized bool
 }
 
 func new(s internalSess.Session, f io.Writer) *Session {
 	return &Session{
-		sess:       s,
-		stream:     f,
-		msgChannel: make(chan webrtc.DataChannelMessage, 4096*2),
+		sess:        s,
+		stream:      f,
+		msgChannel:  make(chan webrtc.DataChannelMessage, 4096*2),
+		initialized: false,
 	}
 }
 
