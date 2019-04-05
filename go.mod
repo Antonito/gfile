@@ -9,7 +9,7 @@ require (
 	github.com/lucas-clemente/quic-go v0.11.0 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
-	github.com/pion/webrtc v1.2.1-0.20190404223203-1cdfc10c8415
+	github.com/pion/webrtc v1.2.1-0.20190404233410-e6025d516420
 	github.com/sirupsen/logrus v1.4.0
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5 // indirect
