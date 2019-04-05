@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/antonito/gfile/internal/buffer"
-	"github.com/antonito/gfile/internal/utils"
 	"github.com/antonito/gfile/pkg/session/common"
+	"github.com/antonito/gfile/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,14 +2,14 @@
 package main
 
 import (
+	"bytes"
 	"syscall/js"
 
-	"github.com/antonito/gfile/internal/buffer"
-	"github.com/antonito/gfile/internal/utils"
 	"github.com/antonito/gfile/pkg/session"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/session/receiver"
 	"github.com/antonito/gfile/pkg/session/sender"
+	"github.com/antonito/gfile/pkg/utils"
 )
 
 var globalSess session.Session
@@ -31,8 +31,8 @@ func onMenuSendFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 	sdpOutputBox := getElementByID("send-sdpOutput")
 	sdpOutputBox.Set("textContent", "Generating SDP...")
 
-	sdpOutput := &buffer.Buffer{}
-	sdpInput := &buffer.Buffer{}
+	sdpOutput := &bytes.Buffer{}
+	sdpInput := &bytes.Buffer{}
 
 	sess := sender.NewWith(sender.Config{
 		Stream: nil,
@@ -76,8 +76,8 @@ func onReceiveFileButtonClick(_ js.Value, _ []js.Value) interface{} {
 	sdpInputBox := getElementByID("receive-sdpInput")
 	sdpInputBoxText := sdpInputBox.Get("textContent").String()
 
-	sdpOutput := &buffer.Buffer{}
-	sdpInput := &buffer.Buffer{}
+	sdpOutput := &bytes.Buffer{}
+	sdpInput := &bytes.Buffer{}
 
 	sdpInput.WriteString(sdpInputBoxText + "\n")
 
