@@ -15,8 +15,24 @@
                 WebAssembly.instantiate(buffer, go.importObject).then((result) => {
                     go.run(result.instance);
                 });
-            }
-            init()
+            };
+
+            window.readFileHelper = async (file, cb) => {
+                const prom = () => new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function() {
+		                const arrayBuffer = this.result,
+			            array = new Uint8Array(arrayBuffer)
+			            //binaryString = String.fromCharCode.apply(null, array);
+		                resolve(array);
+		            };
+                    reader.readAsArrayBuffer(file);
+                });
+                const result = await prom();
+                cb(result);
+            };
+
+            init();
         </script>
     </head>
 
@@ -42,7 +58,7 @@
                     <p class="lead">Send a file</p>
                     <div class="input-group mb-3">
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="send-file-input">
+                            <input type="file" class="custom-file-input" id="send-file-input" onchange="updateFilePlaceholder()">
                             <label class="custom-file-label" for="send-file-input">Choose file</label>
                         </div>
                     </div>
