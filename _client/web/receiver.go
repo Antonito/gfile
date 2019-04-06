@@ -2,7 +2,12 @@
 package main
 
 import (
+	"bytes"
 	"syscall/js"
+
+	"github.com/antonito/gfile/pkg/session/common"
+	"github.com/antonito/gfile/pkg/session/receiver"
+	"github.com/antonito/gfile/pkg/utils"
 )
 
 func onMenuReceiveFileClickHandler(_ js.Value, _ []js.Value) interface{} {
@@ -12,30 +17,28 @@ func onMenuReceiveFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 }
 
 func onReceiveFileButtonClick(_ js.Value, _ []js.Value) interface{} {
-	/*
-		sdpInputBox := getElementByID("receive-sdpInput")
-		sdpInputBoxText := sdpInputBox.Get("textContent").String()
+	sdpInputBox := getElementByID("receive-sdpInput")
+	sdpInputBoxText := sdpInputBox.Get("textContent").String()
 
-			sdpOutput := &bytes.Buffer{}
-			sdpInput := &bytes.Buffer{}
+	sdpOutput := &bytes.Buffer{}
+	sdpInput := &bytes.Buffer{}
 
-			sdpInput.WriteString(sdpInputBoxText + "\n")
+	sdpInput.WriteString(sdpInputBoxText + "\n")
 
-			sess := receiver.NewWith(receiver.Config{
-				Configuration: common.Configuration{
-					SDPProvider: sdpInput,
-					SDPOutput:   sdOutput,
-					OnCompletion: func() {
-					},
-				},
-			})
+	sess := receiver.NewWith(receiver.Config{
+		Configuration: common.Configuration{
+			SDPProvider: sdpInput,
+			SDPOutput:   sdOutput,
+			OnCompletion: func() {
+			},
+		},
+	})
 
-			globalSess = sess
-			sess.Initialize()
-			sdp, err := utils.MustReadStream(sdpOutput)
+	globalSess = sess
+	sess.Initialize()
+	sdp, err := utils.MustReadStream(sdpOutput)
 
-			sdpOutputBox.Set("textContent", sdp)
-	*/
+	sdpOutputBox.Set("textContent", sdp)
 
 	return js.Undefined()
 }

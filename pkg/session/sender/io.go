@@ -41,15 +41,13 @@ func (s *Session) readFile() {
 
 func (s *Session) onBufferedAmountLow() func() {
 	return func() {
-		select {
-		case data := <-s.output:
-			if data.n != 0 {
-				s.msgToBeSent = append(s.msgToBeSent, data)
-			} else if len(s.msgToBeSent) == 0 && s.dataChannel.BufferedAmount() == 0 {
-				s.sess.NetworkStats.Stop()
-				s.close(false)
-				return
-			}
+		data := <-s.output
+		if data.n != 0 {
+			s.msgToBeSent = append(s.msgToBeSent, data)
+		} else if len(s.msgToBeSent) == 0 && s.dataChannel.BufferedAmount() == 0 {
+			s.sess.NetworkStats.Stop()
+			s.close(false)
+			return
 		}
 
 		for len(s.msgToBeSent) != 0 {
@@ -68,13 +66,8 @@ func (s *Session) writeToNetwork() {
 	// Set callback, as transfer may be paused
 	s.dataChannel.OnBufferedAmountLow(s.onBufferedAmountLow())
 
-	for {
-		select {
-		case <-s.stopSending:
-			s.dataChannel.OnBufferedAmountLow(nil)
-			s.sess.NetworkStats.Pause()
-			log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
-			return
-		}
-	}
+	<-s.stopSending
+	s.dataChannel.OnBufferedAmountLow(nil)
+	s.sess.NetworkStats.Pause()
+	log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 }

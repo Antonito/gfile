@@ -20,7 +20,9 @@ func (s *Session) onOpenUploadHandler(dc *webrtc.DataChannel) func() {
 
 		lenToken := uint64(4096)
 		token := make([]byte, lenToken)
-		rand.Read(token)
+		if _, err := rand.Read(token); err != nil {
+			log.Fatalln("Err: ", err)
+		}
 
 		s.uploadNetworkStats.Start()
 
@@ -41,7 +43,8 @@ func (s *Session) onOpenUploadHandler(dc *webrtc.DataChannel) func() {
 		timeoutErr := time.After(s.testDurationError)
 
 		if dc != nil {
-			dc.Send(token)
+			// Ignore potential error
+			_ = dc.Send(token)
 		}
 	SENDING_LOOP:
 		for {

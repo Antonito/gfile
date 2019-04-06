@@ -30,14 +30,9 @@ func (s *Session) onOpenHandlerDownload(dc *webrtc.DataChannel) func() {
 		}
 
 		fmt.Printf("Downloading random datas ... (%d s)\n", int(s.testDuration.Seconds()))
-	DOWNLOAD_LOOP:
-		for {
-			select {
-			case <-s.downloadDone:
-				log.Traceln("Done downloading")
-				break DOWNLOAD_LOOP
-			}
-		}
+
+		<-s.downloadDone
+		log.Traceln("Done downloading")
 
 		if !s.master {
 			close(s.startPhase2)

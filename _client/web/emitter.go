@@ -7,6 +7,10 @@ import (
 	"reflect"
 	"syscall/js"
 	"unsafe"
+
+	"github.com/antonito/gfile/pkg/session/common"
+	"github.com/antonito/gfile/pkg/session/sender"
+	"github.com/antonito/gfile/pkg/utils"
 )
 
 func updateFilePlaceholder(_ js.Value, _ []js.Value) interface{} {
@@ -40,24 +44,22 @@ func sendFile(fileContent js.Value) {
 
 	reader := bytes.NewReader(fileBuffer)
 
-	/*
-		// Retrieve remote SDP
-		sdpInputBox := getElementByID("send-sdpInput")
-		sdpInputBoxText := sdpInputBox.Get("textContent").String()
+	// Retrieve remote SDP
+	sdpInputBox := getElementByID("send-sdpInput")
+	sdpInputBoxText := sdpInputBox.Get("textContent").String()
 
-		// Access session
-			sess := globalSess.(*sender.Session)
-			sess.SDPProvider().WriteString(sdpInputBoxText)
+	// Access session
+	sess := globalSess.(*sender.Session)
+	sess.SDPProvider().WriteString(sdpInputBoxText)
 
-			sess.SetStream(reader)
+	sess.SetStream(reader)
 
-			// Notify client, in progress
-			if err := sess.Start(); err != nil {
-				// Notifiy client of error
-				// TODO: Handle error
-			}
-			// Notifiy client of end
-	*/
+	// Notify client, in progress
+	if err := sess.Start(); err != nil {
+		// Notifiy client of error
+		// TODO: Handle error
+	}
+	// Notifiy client of end
 }
 
 func onSendFileButtonClick(_ js.Value, _ []js.Value) interface{} {
@@ -88,28 +90,29 @@ func onMenuSendFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 	sdpOutputBox := getElementByID("send-sdpOutput")
 	sdpOutputBox.Set("textContent", "Generating SDP...")
 
-	/*
-		// Start session
-		sdpOutput := &bytes.Buffer{}
-		sdpInput := &bytes.Buffer{}
+	// Start session
+	sdpOutput := &bytes.Buffer{}
+	sdpInput := &bytes.Buffer{}
 
-		sess := sender.NewWith(sender.Config{
-			Stream: nil,
-			Configuration: common.Configuration{
-				SDPProvider: sdpInput,
-				SDPOutput:   sdOutput,
-				OnCompletion: func() {
-					// TODO: Notify user ?
-				},
+	sess := sender.NewWith(sender.Config{
+		Stream: nil,
+		Configuration: common.Configuration{
+			SDPProvider: sdpInput,
+			SDPOutput:   sdOutput,
+			OnCompletion: func() {
+				// TODO: Notify user ?
 			},
-		})
-		globalSess = sess
-		sess.Initialize()
-		sdp, err := utils.MustReadStream(sdpOutput)
+		},
+	})
+	globalSess = sess
+	sess.Initialize()
+	sdp, err := utils.MustReadStream(sdpOutput)
+	if err != nil {
+		// TODO: Notify error
+	}
 
-		// Show SDP to the user
-		sdpOutputBox.Set("textContent", sdp)
-	*/
+	// Show SDP to the user
+	sdpOutputBox.Set("textContent", sdp)
 
 	return js.Undefined()
 }

@@ -7,7 +7,6 @@ import (
 	internalSess "github.com/antonito/gfile/internal/session"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/stats"
-	"github.com/pion/webrtc"
 )
 
 const (
@@ -28,7 +27,6 @@ type Session struct {
 	testDurationError time.Duration
 
 	startPhase2          chan struct{}
-	uploadDataChannel    *webrtc.DataChannel
 	uploadNetworkStats   stats.Stats
 	downloadDone         chan bool
 	downloadNetworkStats stats.Stats
