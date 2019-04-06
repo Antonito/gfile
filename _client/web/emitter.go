@@ -2,8 +2,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"reflect"
 	"syscall/js"
+	"unsafe"
 )
 
 func updateFilePlaceholder(_ js.Value, _ []js.Value) interface{} {
@@ -27,10 +30,15 @@ func updateFilePlaceholder(_ js.Value, _ []js.Value) interface{} {
 }
 
 func sendFile(fileContent js.Value) {
-	fileBuffer := fileContent.Get("buffer").Call("slice")
-	fmt.Printf("%v\n", []byte(fileBuffer))
+	// Manually allocate a memory zone, and get its raw pointer
+	// make it point to the JS internal's memory array
+	fileContentLength := fileContent.Length()
+	fileBuffer := make([]byte, fileContentLength)
+	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&fileBuffer))
+	ptr := uintptr(unsafe.Pointer(hdr.Data))
+	js.Global().Get("window").Call("setMemory", fileContent, ptr)
 
-	// reader := bytes.NewReader([]byte(fileContent))
+	reader := bytes.NewReader(fileBuffer)
 
 	/*
 		// Retrieve remote SDP
@@ -41,8 +49,7 @@ func sendFile(fileContent js.Value) {
 			sess := globalSess.(*sender.Session)
 			sess.SDPProvider().WriteString(sdpInputBoxText)
 
-			// TODO: Start file stream
-			sess.SetStream(nil)
+			sess.SetStream(reader)
 
 			// Notify client, in progress
 			if err := sess.Start(); err != nil {
