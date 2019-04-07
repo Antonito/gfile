@@ -40,3 +40,8 @@ type Config struct {
 func NewWith(c Config) *Session {
 	return new(internalSess.New(c.SDPProvider, c.SDPOutput), c.Stream)
 }
+
+// SetStream changes the stream, useful for WASM integration
+func (s *Session) SetStream(stream io.Writer) {
+	s.stream = stream
+}

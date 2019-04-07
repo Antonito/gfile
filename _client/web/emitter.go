@@ -46,11 +46,12 @@ func sendFile(fileContent js.Value) {
 
 	// Retrieve remote SDP
 	sdpInputBox := getElementByID("send-sdpInput")
-	sdpInputBoxText := sdpInputBox.Get("textContent").String()
+	sdpInputBoxText := sdpInputBox.Get("value").String()
 
 	// Access session
 	sess := globalSess.(*sender.Session)
-	sess.SDPProvider().WriteString(sdpInputBoxText)
+
+	sdpInput.WriteString(sdpInputBoxText + "\n")
 
 	sess.SetStream(reader)
 
@@ -60,59 +61,60 @@ func sendFile(fileContent js.Value) {
 		// TODO: Handle error
 	}
 	// Notifiy client of end
+	processDone <- struct{}{}
 }
 
 func onSendFileButtonClick(_ js.Value, _ []js.Value) interface{} {
-	// Check if file was selected
-	fileSelector := getElementByID("send-file-input")
-	fileList := fileSelector.Get("files")
-	if fileList.Length() == 0 {
-		// TODO: Pop-up error
-		fmt.Printf("No file selected\n")
-		return js.Undefined()
-	}
-	fileToSend := fileList.Index(0)
-
-	js.Global().Call("readFileHelper", fileToSend, js.FuncOf(func(_ js.Value, res []js.Value) interface{} {
-		if len(res) >= 1 {
-			sendFile(res[0])
+	go func() {
+		// Check if file was selected
+		fileSelector := getElementByID("send-file-input")
+		fileList := fileSelector.Get("files")
+		if fileList.Length() == 0 {
+			// TODO: Pop-up error
+			fmt.Println("No file selected")
+			return
 		}
-		return js.Undefined()
-	}))
+		fileToSend := fileList.Index(0)
+
+		js.Global().Call("readFileHelper", fileToSend, js.FuncOf(func(_ js.Value, res []js.Value) interface{} {
+			if len(res) >= 1 {
+				go sendFile(res[0])
+			}
+			return js.Undefined()
+		}))
+	}()
 	return js.Undefined()
 }
 
 func onMenuSendFileClickHandler(_ js.Value, _ []js.Value) interface{} {
-	// Update UI
-	getElementByID("menu-container").Set("hidden", true)
-	getElementByID("menu-send-container").Set("hidden", false)
+	go func() {
+		// Update UI
+		getElementByID("menu-container").Set("hidden", true)
+		getElementByID("menu-send-container").Set("hidden", false)
 
-	sdpOutputBox := getElementByID("send-sdpOutput")
-	sdpOutputBox.Set("textContent", "Generating SDP...")
+		sdpOutputBox := getElementByID("send-sdpOutput")
+		sdpOutputBox.Set("textContent", "Generating SDP...")
 
-	// Start session
-	sdpOutput := &bytes.Buffer{}
-	sdpInput := &bytes.Buffer{}
-
-	sess := sender.NewWith(sender.Config{
-		Stream: nil,
-		Configuration: common.Configuration{
-			SDPProvider: sdpInput,
-			SDPOutput:   sdOutput,
-			OnCompletion: func() {
-				// TODO: Notify user ?
+		sess := sender.NewWith(sender.Config{
+			Stream: nil,
+			Configuration: common.Configuration{
+				SDPProvider: sdpInput,
+				SDPOutput:   sdpOutput,
+				OnCompletion: func() {
+					// TODO: Notify user ?
+				},
 			},
-		},
-	})
-	globalSess = sess
-	sess.Initialize()
-	sdp, err := utils.MustReadStream(sdpOutput)
-	if err != nil {
-		// TODO: Notify error
-	}
+		})
+		globalSess = sess
+		sess.Initialize()
+		sdp, err := utils.MustReadStream(sdpOutput)
+		if err != nil {
+			// TODO: Notify error
+		}
 
-	// Show SDP to the user
-	sdpOutputBox.Set("textContent", sdp)
+		// Show SDP to the user
+		sdpOutputBox.Set("textContent", sdp)
+	}()
 
 	return js.Undefined()
 }
