@@ -119,7 +119,8 @@ func (s *Session) createSessionDescription(desc webrtc.SessionDescription) error
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(s.sdpOutput, "Send this SDP:\n%s\n", resp)
+	fmt.Println("Send this SDP:")
+	fmt.Fprintf(s.sdpOutput, "%s\n", resp)
 	return nil
 }
 

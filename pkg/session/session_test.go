@@ -69,6 +69,7 @@ func Test_TransferSmallMessage(t *testing.T) {
 	// Get SDP from sender and send it to the client
 	sdp, err := utils.MustReadStream(senderSDPOutput)
 	assert.Nil(err)
+	fmt.Printf("READ SDP -> %s\n", sdp)
 	sdp += "\n"
 	n, err = clientSDPProvider.WriteString(sdp)
 	assert.Nil(err)

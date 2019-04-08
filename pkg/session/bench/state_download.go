@@ -2,6 +2,7 @@ package bench
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pion/webrtc/v2"
 	log "github.com/sirupsen/logrus"
@@ -30,9 +31,15 @@ func (s *Session) onOpenHandlerDownload(dc *webrtc.DataChannel) func() {
 			log.Warningln("No DataChannel provided")
 		}
 
+		timeoutErr := time.After(s.testDurationError)
 		fmt.Printf("Downloading random datas ... (%d s)\n", int(s.testDuration.Seconds()))
 
-		<-s.downloadDone
+		select {
+		case <-s.downloadDone:
+		case <-timeoutErr:
+			log.Error("Time'd out")
+		}
+
 		log.Traceln("Done downloading")
 
 		if !s.master {
