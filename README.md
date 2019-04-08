@@ -10,13 +10,11 @@ gfile is a WebRTC based file exchange software.
 
 It allows to share a file directly between two computers, without the need of a third party.
 
-![ezgif-5-9936f8008e4d](https://user-images.githubusercontent.com/11705040/54066419-39d32a80-41e4-11e9-83de-bd16be302766.gif)
+![ezgif-5-9936f8008e4d](https://user-images.githubusercontent.com/11705040/55694519-686e2d80-5969-11e9-9bc1-f7a59b62732f.gif)
 
 ## Note
 
 This project is still in its early stage.
-
-As of today, it works well with small files. It doesn't work with huge files, due to disconnection issues. (WIP)
 
 ## Usage
 
@@ -54,6 +52,10 @@ gfile bench -m
 # Run as 'slave'
 echo "$SDP" |  gfile bench
 ```
+
+### Web Interface
+
+A web interface is being developed via WebAssembly. It is currently **not** working.
 
 ### Debug
 

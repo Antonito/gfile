@@ -1,6 +1,8 @@
 package sender
 
 import (
+	"fmt"
+
 	"github.com/pion/webrtc/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -49,7 +51,7 @@ func (s *Session) close(calledFromCloseHandler bool) {
 }
 
 func (s *Session) dumpStats() {
-	log.Infof(`
+	fmt.Printf(`
 Disk   : %s
 Network: %s
 `, s.readingStats.String(), s.sess.NetworkStats.String())

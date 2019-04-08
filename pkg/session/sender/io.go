@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"io"
 
 	log "github.com/sirupsen/logrus"
@@ -50,8 +51,12 @@ func (s *Session) onBufferedAmountLow() func() {
 			return
 		}
 
+		currentSpeed := s.sess.NetworkStats.Bandwidth()
+		fmt.Printf("Transferring at %.2f MB/s\r", currentSpeed)
+
 		for len(s.msgToBeSent) != 0 {
 			cur := s.msgToBeSent[0]
+
 			if err := s.dataChannel.Send(cur.buff); err != nil {
 				log.Errorf("Error, cannot send to client: %v\n", err)
 				return

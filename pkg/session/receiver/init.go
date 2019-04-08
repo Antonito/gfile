@@ -1,6 +1,8 @@
 package receiver
 
 import (
+	"fmt"
+
 	"github.com/pion/webrtc/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -42,7 +44,7 @@ func (s *Session) Start() error {
 
 func (s *Session) createDataHandler() {
 	s.sess.OnDataChannel(func(d *webrtc.DataChannel) {
-		log.Debugf("New DataChannel %s %d\n", d.Label, d.ID)
+		log.Debugf("New DataChannel %s %d\n", d.Label(), d.ID())
 		s.sess.NetworkStats.Start()
 		d.OnMessage(s.onMessage())
 		d.OnClose(s.onClose())
@@ -59,6 +61,7 @@ func (s *Session) receiveData() {
 		select {
 		case <-s.sess.Done:
 			s.sess.NetworkStats.Stop()
+			fmt.Printf("\nNetwork: %s\n", s.sess.NetworkStats.String())
 			return
 		case msg := <-s.msgChannel:
 			n, err := s.stream.Write(msg.Data)
@@ -66,6 +69,8 @@ func (s *Session) receiveData() {
 			if err != nil {
 				log.Errorln(err)
 			} else {
+				currentSpeed := s.sess.NetworkStats.Bandwidth()
+				fmt.Printf("Transferring at %.2f MB/s\r", currentSpeed)
 				s.sess.NetworkStats.AddBytes(uint64(n))
 			}
 		}
