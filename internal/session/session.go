@@ -16,7 +16,7 @@ type CompletionHandler func()
 // Session contains common elements to perform send/receive
 type Session struct {
 	Done           chan struct{}
-	NetworkStats   stats.Stats
+	NetworkStats   *stats.Stats
 	sdpInput       io.Reader
 	sdpOutput      io.Writer
 	peerConnection *webrtc.PeerConnection
@@ -32,9 +32,10 @@ func New(sdpInput io.Reader, sdpOutput io.Writer) Session {
 		sdpOutput = os.Stdout
 	}
 	return Session{
-		sdpInput:  sdpInput,
-		sdpOutput: sdpOutput,
-		Done:      make(chan struct{}),
+		sdpInput:     sdpInput,
+		sdpOutput:    sdpOutput,
+		Done:         make(chan struct{}),
+		NetworkStats: stats.New(),
 	}
 }
 

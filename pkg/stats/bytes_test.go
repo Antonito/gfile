@@ -31,7 +31,7 @@ func Test_Bytes(t *testing.T) {
 		},
 	}
 
-	s := Stats{}
+	s := New()
 	for _, cur := range tests {
 		assert.Equal(cur.before, s.Bytes())
 		s.AddBytes(cur.add)

@@ -36,19 +36,20 @@ type Session struct {
 	doneCheck     bool
 
 	// Stats/infos
-	readingStats stats.Stats
+	readingStats *stats.Stats
 }
 
 // New creates a new sender session
 func new(s internalSess.Session, f io.Reader) *Session {
 	return &Session{
-		sess:        s,
-		stream:      f,
-		initialized: false,
-		dataBuff:    make([]byte, senderBuffSize),
-		stopSending: make(chan struct{}, 1),
-		output:      make(chan outputMsg, senderBuffSize*10),
-		doneCheck:   false,
+		sess:         s,
+		stream:       f,
+		initialized:  false,
+		dataBuff:     make([]byte, senderBuffSize),
+		stopSending:  make(chan struct{}, 1),
+		output:       make(chan outputMsg, senderBuffSize*10),
+		doneCheck:    false,
+		readingStats: stats.New(),
 	}
 }
 

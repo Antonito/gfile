@@ -8,13 +8,20 @@ import (
 
 // Stats provide a way to track statistics infos
 type Stats struct {
-	lock      sync.RWMutex
+	lock      *sync.RWMutex
 	nbBytes   uint64
 	timeStart time.Time
 	timeStop  time.Time
 
 	timePause  time.Time
 	timePaused time.Duration
+}
+
+// New creates a new Stats
+func New() *Stats {
+	return &Stats{
+		lock: &sync.RWMutex{},
+	}
 }
 
 func (s *Stats) String() string {

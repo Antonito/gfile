@@ -9,7 +9,7 @@ import (
 
 func Test_ControlFlow(t *testing.T) {
 	assert := assert.New(t)
-	s := Stats{}
+	s := New()
 
 	// Everything should be 0 at the beginning
 	assert.Equal(true, s.timeStart.IsZero())

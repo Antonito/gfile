@@ -27,9 +27,9 @@ type Session struct {
 	testDurationError time.Duration
 
 	startPhase2          chan struct{}
-	uploadNetworkStats   stats.Stats
+	uploadNetworkStats   *stats.Stats
 	downloadDone         chan bool
-	downloadNetworkStats stats.Stats
+	downloadNetworkStats *stats.Stats
 }
 
 // New creates a new sender session
@@ -42,8 +42,10 @@ func new(s internalSess.Session, isMaster bool) *Session {
 		testDuration:      testDurationDefault,
 		testDurationError: testDurationErrorDefault,
 
-		startPhase2:  make(chan struct{}),
-		downloadDone: make(chan bool),
+		startPhase2:          make(chan struct{}),
+		downloadDone:         make(chan bool),
+		uploadNetworkStats:   stats.New(),
+		downloadNetworkStats: stats.New(),
 	}
 }
 

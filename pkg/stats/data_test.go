@@ -10,7 +10,7 @@ import (
 
 func Test_Bandwidth(t *testing.T) {
 	assert := assert.New(t)
-	s := Stats{}
+	s := New()
 
 	now := time.Now()
 	tests := []struct {
@@ -66,7 +66,7 @@ func Test_Bandwidth(t *testing.T) {
 
 func Test_Duration(t *testing.T) {
 	assert := assert.New(t)
-	s := Stats{}
+	s := New()
 
 	// Should be 0
 	assert.Equal(time.Duration(0), s.Duration())
