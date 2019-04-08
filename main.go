@@ -50,10 +50,7 @@ func run(args []string) error {
 	log.Tracef("Starting %s v%v\n", app.Name, app.Version)
 
 	cmd.Install(app)
-	if err := app.Run(args); err != nil {
-		return err
-	}
-	return nil
+	return app.Run(args)
 }
 
 func main() {
