@@ -25,7 +25,7 @@ gfile send --file filename
 ```
 
 -   Run the command
--   A base64 encoded SDP will appear, send it to the remote client
+-   A base64 encoded ![SDP](https://tools.ietf.org/html/rfc4566) will appear, send it to the remote client
 -   Follow the instructions to send the client's SDP to your process
 -   The file transfer should start
 
