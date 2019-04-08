@@ -7,7 +7,7 @@ import (
 
 	"github.com/antonito/gfile/pkg/stats"
 	"github.com/antonito/gfile/pkg/utils"
-	"github.com/pion/webrtc"
+	"github.com/pion/webrtc/v2"
 )
 
 // CompletionHandler to be called when transfer is done

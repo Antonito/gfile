@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"syscall/js"
@@ -15,16 +16,6 @@ func onMenuReceiveFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 	go func() {
 		getElementByID("menu-container").Set("hidden", true)
 		getElementByID("menu-receive-container").Set("hidden", false)
-
-		sess := globalSess.(*receiver.Session)
-		writer := bytes.Buffer{}
-
-		sess.SetStream(writer)
-		if err := sess.Start(); err != nil {
-			// TOOD: Notify error
-		}
-
-		processDone <- struct{}{}
 	}()
 	return js.Undefined()
 }
@@ -32,7 +23,7 @@ func onMenuReceiveFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 func onReceiveFileButtonClick(_ js.Value, _ []js.Value) interface{} {
 	go func() {
 		sdpInputBox := getElementByID("receive-sdpInput")
-		sdpInputBoxText := sdpInputBox.Get("textContent").String()
+		sdpInputBoxText := sdpInputBox.Get("value").String()
 
 		sdpInput.WriteString(sdpInputBoxText + "\n")
 
@@ -46,18 +37,35 @@ func onReceiveFileButtonClick(_ js.Value, _ []js.Value) interface{} {
 		})
 
 		globalSess = sess
+		sess.Initialize()
 
-		go sess.Initialize()
-
+		fmt.Printf("Reading SDP\n")
 		sdp, err := utils.MustReadStream(sdpOutput)
 		if err != nil {
 			fmt.Printf("Got error -> %s\n", err)
 			// TODO: Notify error
 		}
 
-		fmt.Println("SDP is %s", sdp)
 		sdpOutputBox := getElementByID("receive-sdpOutput")
 		sdpOutputBox.Set("textContent", sdp)
+
+		buffer := &bytes.Buffer{}
+		writerBuffer := bufio.NewWriter(buffer)
+		sess.SetStream(writerBuffer)
+		if err := sess.Start(); err != nil {
+			fmt.Printf("Got an error: %v\n", err)
+			// TOOD: Notify error
+		} else {
+			// Write file
+			fmt.Println("Ready to write content")
+			filename := "donwload.lol"
+			bufferBytes := buffer.Bytes()
+			array := js.TypedArrayOf(bufferBytes)
+			js.Global().Get("window").Call("saveFile", filename, array)
+			array.Release()
+		}
+
+		processDone <- struct{}{}
 	}()
 
 	return js.Undefined()

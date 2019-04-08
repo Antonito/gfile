@@ -5,7 +5,7 @@ import (
 
 	internalSess "github.com/antonito/gfile/internal/session"
 	"github.com/antonito/gfile/pkg/session/common"
-	"github.com/pion/webrtc"
+	"github.com/pion/webrtc/v2"
 )
 
 // Session is a receiver session

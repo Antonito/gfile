@@ -7,7 +7,7 @@ import (
 	internalSess "github.com/antonito/gfile/internal/session"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/stats"
-	"github.com/pion/webrtc"
+	"github.com/pion/webrtc/v2"
 )
 
 const (

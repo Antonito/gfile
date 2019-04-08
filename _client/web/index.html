@@ -4,19 +4,29 @@
         <link href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/darkly/bootstrap.min.css"
             rel="stylesheet" integrity="sha384-w+8Gqjk9Cuo6XH9HKHG5t5I1VR4YBNdPt/29vwgfZR485eoEJZ8rJRbm3TR32P6k"
             crossorigin="anonymous">
+        <script src="stream_saver.js"></script>
+        <script src="https://unpkg.com/@mattiasbuelens/web-streams-polyfill/dist/polyfill.min.js"></script>
         <script src="wasm_exec.js"></script>
         <script>
+            const { createWriteStream, supported, version } = window.streamSaver
             const go = new Go();
             let memoryBytes;
 
             const init = async () => {
                 const response = await fetch("main.wasm");
                 const buffer = await response.arrayBuffer();
-    
+
                 WebAssembly.instantiate(buffer, go.importObject).then((result) => {
                     memoryBytes = new Uint8Array(result.instance.exports.mem.buffer)
                     go.run(result.instance);
                 });
+            };
+
+            window.saveFile  = (filename, buffer) => {
+                const fileStream = createWriteStream(filename);
+                const writer = fileStream.getWriter();
+                writer.write(buffer);
+                writer.close();
             };
 
             window.setMemory = (bytes, pointer) => {
