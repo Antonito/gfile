@@ -3,6 +3,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/5888662aebd54d2681f9a737dfd33913)](https://www.codacy.com/app/Antonito/gfile?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Antonito/gfile&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/Antonito/gfile/badge.svg?branch=master)](https://coveralls.io/github/Antonito/gfile?branch=master)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)  
 
 # GFile
 
