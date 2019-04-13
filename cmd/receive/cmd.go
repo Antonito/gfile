@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/antonito/gfile/internal/utils"
 	"github.com/antonito/gfile/pkg/session/receiver"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -21,9 +22,19 @@ func handler(c *cli.Context) error {
 	}
 	defer f.Close()
 
-	sess := receiver.NewWith(receiver.Config{
+	conf := receiver.Config{
 		Stream: f,
-	})
+	}
+
+	customSTUN := c.String("stun")
+	if customSTUN != "" {
+		if err := utils.ParseSTUN(customSTUN); err != nil {
+			return err
+		}
+		conf.STUN = customSTUN
+	}
+
+	sess := receiver.NewWith(conf)
 	return sess.Start()
 }
 
@@ -39,6 +50,10 @@ func New() cli.Command {
 			cli.StringFlag{
 				Name:  "output, o",
 				Usage: "Output",
+			},
+			cli.StringFlag{
+				Name:  "stun",
+				Usage: "Use a specific STUN server (ex: --stun stun.l.google.com:19302)",
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/antonito/gfile/internal/utils"
 	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/session/sender"
 	log "github.com/sirupsen/logrus"
@@ -20,13 +21,23 @@ func handler(c *cli.Context) error {
 		return err
 	}
 	defer f.Close()
-	sess := sender.NewWith(sender.Config{
+	conf := sender.Config{
 		Stream: f,
 		Configuration: common.Configuration{
 			OnCompletion: func() {
 			},
 		},
-	})
+	}
+
+	customSTUN := c.String("stun")
+	if customSTUN != "" {
+		if err := utils.ParseSTUN(customSTUN); err != nil {
+			return err
+		}
+		conf.STUN = customSTUN
+	}
+
+	sess := sender.NewWith(conf)
 	return sess.Start()
 }
 
@@ -42,6 +53,10 @@ func New() cli.Command {
 			cli.StringFlag{
 				Name:  "file, f",
 				Usage: "Send content of file `FILE`",
+			},
+			cli.StringFlag{
+				Name:  "stun",
+				Usage: "Use a specific STUN server (ex: --stun stun.l.google.com:19302)",
 			},
 		},
 	}

@@ -21,22 +21,29 @@ type Session struct {
 	sdpOutput      io.Writer
 	peerConnection *webrtc.PeerConnection
 	onCompletion   CompletionHandler
+	stunServers    []string
 }
 
 // New creates a new Session
-func New(sdpInput io.Reader, sdpOutput io.Writer) Session {
-	if sdpInput == nil {
-		sdpInput = os.Stdin
-	}
-	if sdpOutput == nil {
-		sdpOutput = os.Stdout
-	}
-	return Session{
+func New(sdpInput io.Reader, sdpOutput io.Writer, customSTUN string) Session {
+	sess := Session{
 		sdpInput:     sdpInput,
 		sdpOutput:    sdpOutput,
 		Done:         make(chan struct{}),
 		NetworkStats: stats.New(),
+		stunServers:  []string{fmt.Sprintf("stun:%s", customSTUN)},
 	}
+
+	if sdpInput == nil {
+		sess.sdpInput = os.Stdin
+	}
+	if sdpOutput == nil {
+		sess.sdpOutput = os.Stdout
+	}
+	if customSTUN == "" {
+		sess.stunServers = []string{"stun:stun.l.google.com:19302"}
+	}
+	return sess
 }
 
 // CreateConnection prepares a WebRTC connection
@@ -44,7 +51,7 @@ func (s *Session) CreateConnection(onConnectionStateChange func(connectionState 
 	config := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
+				URLs: s.stunServers,
 			},
 		},
 	}

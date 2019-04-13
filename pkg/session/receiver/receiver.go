@@ -27,7 +27,7 @@ func new(s internalSess.Session, f io.Writer) *Session {
 
 // New creates a new receiver session
 func New(f io.Writer) *Session {
-	return new(internalSess.New(nil, nil), f)
+	return new(internalSess.New(nil, nil, ""), f)
 }
 
 // Config contains custom configuration for a session
@@ -38,7 +38,7 @@ type Config struct {
 
 // NewWith createa a new receiver Session with custom configuration
 func NewWith(c Config) *Session {
-	return new(internalSess.New(c.SDPProvider, c.SDPOutput), c.Stream)
+	return new(internalSess.New(c.SDPProvider, c.SDPOutput, c.STUN), c.Stream)
 }
 
 // SetStream changes the stream, useful for WASM integration

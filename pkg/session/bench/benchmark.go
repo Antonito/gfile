@@ -57,5 +57,5 @@ type Config struct {
 
 // NewWith createa a new benchmark Session with custom configuration
 func NewWith(c Config) *Session {
-	return new(internalSess.New(c.SDPProvider, c.SDPOutput), c.Master)
+	return new(internalSess.New(c.SDPProvider, c.SDPOutput, c.STUN), c.Master)
 }
