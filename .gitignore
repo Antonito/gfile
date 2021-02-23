@@ -17,3 +17,5 @@ dist/
 cover/
 
 *.wasm
+
+.idea/

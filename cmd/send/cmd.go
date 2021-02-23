@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/antonito/gfile/internal/utils"
-	"github.com/antonito/gfile/pkg/session/common"
 	"github.com/antonito/gfile/pkg/session/sender"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
@@ -23,10 +22,6 @@ func handler(c *cli.Context) error {
 	defer f.Close()
 	conf := sender.Config{
 		Stream: f,
-		Configuration: common.Configuration{
-			OnCompletion: func() {
-			},
-		},
 	}
 
 	customSTUN := c.String("stun")

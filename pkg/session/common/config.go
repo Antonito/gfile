@@ -2,14 +2,11 @@ package common
 
 import (
 	"io"
-
-	"github.com/antonito/gfile/internal/session"
 )
 
 // Configuration common to both Sender and Receiver session
 type Configuration struct {
-	SDPProvider  io.Reader                 // The SDP reader
-	SDPOutput    io.Writer                 // The SDP writer
-	OnCompletion session.CompletionHandler // Handler to call on session completion
-	STUN         string                    // Custom STUN server
+	SDPProvider io.Reader // The SDP reader
+	SDPOutput   io.Writer // The SDP writer
+	STUN        string    // Custom STUN server
 }

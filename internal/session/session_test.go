@@ -1,15 +1,6 @@
 package session
 
-import (
-	"bufio"
-	"bytes"
-	"os"
-	"strings"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 func Test_New(t *testing.T) {
 	assert := assert.New(t)
 	input := bufio.NewReader(&bytes.Buffer{})
@@ -32,3 +23,4 @@ func Test_New(t *testing.T) {
 	assert.Equal("test", arr[1])
 	assert.Equal("123", arr[2])
 }
+*/

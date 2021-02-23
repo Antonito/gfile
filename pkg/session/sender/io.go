@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/pion/webrtc/v3"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,24 +13,28 @@ func (s *Session) readFile() {
 	log.Infof("Starting to read data...")
 	s.readingStats.Start()
 	defer func() {
-		s.readingStats.Pause()
-		log.Infof("Stopped reading data...")
+		s.readingStats.Stop()
 		close(s.output)
+		log.Infof("Stopped reading data...")
 	}()
 
 	for {
 		// Read file
 		s.dataBuff = s.dataBuff[:cap(s.dataBuff)]
+
 		n, err := s.stream.Read(s.dataBuff)
 		if err != nil {
 			if err == io.EOF {
-				s.readingStats.Stop()
 				log.Debugf("Got EOF after %v bytes!\n", s.readingStats.Bytes())
 				return
 			}
 			log.Errorf("Read Error: %v\n", err)
 			return
 		}
+		if n == 0 {
+			return
+		}
+
 		s.dataBuff = s.dataBuff[:n]
 		s.readingStats.AddBytes(uint64(n))
 
@@ -40,39 +46,29 @@ func (s *Session) readFile() {
 	}
 }
 
-func (s *Session) onBufferedAmountLow() func() {
-	return func() {
-		data := <-s.output
-		if data.n != 0 {
-			s.msgToBeSent = append(s.msgToBeSent, data)
-		} else if len(s.msgToBeSent) == 0 && s.dataChannel.BufferedAmount() == 0 {
-			s.sess.NetworkStats.Stop()
-			s.close(false)
-			return
-		}
-
+func (s *Session) writeToNetwork(dataChannel *webrtc.DataChannel) {
+	defer func() {
 		currentSpeed := s.sess.NetworkStats.Bandwidth()
-		fmt.Printf("Transferring at %.2f MB/s\r", currentSpeed)
+		fmt.Printf("Transferred at %.2f MB/s\n", currentSpeed)
+	}()
 
-		for len(s.msgToBeSent) != 0 {
-			cur := s.msgToBeSent[0]
+	for {
+		select {
+		case msg := <-s.output:
+			if msg.n == 0 {
+				log.Debugf("done writing file\n")
+				return
+			}
 
-			if err := s.dataChannel.Send(cur.buff); err != nil {
+			currentSpeed := s.sess.NetworkStats.Bandwidth()
+			fmt.Printf("Transferring at %.2f MB/s\r", currentSpeed)
+
+			if err := dataChannel.Send(msg.buff); err != nil {
 				log.Errorf("Error, cannot send to client: %v\n", err)
 				return
 			}
-			s.sess.NetworkStats.AddBytes(uint64(cur.n))
-			s.msgToBeSent = s.msgToBeSent[1:]
+
+			s.sess.NetworkStats.AddBytes(uint64(msg.n))
 		}
 	}
-}
-
-func (s *Session) writeToNetwork() {
-	// Set callback, as transfer may be paused
-	s.dataChannel.OnBufferedAmountLow(s.onBufferedAmountLow())
-
-	<-s.stopSending
-	s.dataChannel.OnBufferedAmountLow(nil)
-	s.sess.NetworkStats.Pause()
-	log.Infof("Pausing network I/O... (remaining at least %v packets)\n", len(s.output))
 }
