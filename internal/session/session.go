@@ -5,136 +5,112 @@ import (
 	"io"
 	"os"
 
+	"github.com/antonito/gfile/internal/session/rtc"
 	"github.com/antonito/gfile/pkg/stats"
-	"github.com/antonito/gfile/pkg/utils"
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v3"
 )
 
 // CompletionHandler to be called when transfer is done
 type CompletionHandler func()
 
+type SDPIO struct {
+	Input  io.Reader
+	Output io.Writer
+}
+
 // Session contains common elements to perform send/receive
 type Session struct {
-	Done           chan struct{}
-	NetworkStats   *stats.Stats
-	sdpInput       io.Reader
-	sdpOutput      io.Writer
-	peerConnection *webrtc.PeerConnection
-	onCompletion   CompletionHandler
-	stunServers    []string
+	kind  Kind
+	sdpIO SDPIO
+
+	Done         chan struct{}
+	NetworkStats *stats.Stats
+
+	rtcClient *rtc.Client
+
+	stunServers []string
 }
 
 // New creates a new Session
-func New(sdpInput io.Reader, sdpOutput io.Writer, customSTUN string) Session {
+func New(kind Kind, sdpIO SDPIO, customSTUN string, dataChannelConfiguration rtc.DataChannelConfiguration) *Session {
 	sess := Session{
-		sdpInput:     sdpInput,
-		sdpOutput:    sdpOutput,
+		kind:         kind,
+		sdpIO:        sdpIO,
 		Done:         make(chan struct{}),
 		NetworkStats: stats.New(),
 		stunServers:  []string{fmt.Sprintf("stun:%s", customSTUN)},
 	}
 
-	if sdpInput == nil {
-		sess.sdpInput = os.Stdin
+	if sdpIO.Input == nil {
+		sess.sdpIO.Input = os.Stdin
 	}
-	if sdpOutput == nil {
-		sess.sdpOutput = os.Stdout
+	if sdpIO.Output == nil {
+		sess.sdpIO.Output = os.Stdout
 	}
 	if customSTUN == "" {
 		sess.stunServers = []string{"stun:stun.l.google.com:19302"}
 	}
-	return sess
-}
 
-// CreateConnection prepares a WebRTC connection
-func (s *Session) CreateConnection(onConnectionStateChange func(connectionState webrtc.ICEConnectionState)) error {
-	config := webrtc.Configuration{
+	sess.rtcClient = rtc.NewClient(rtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
-				URLs: s.stunServers,
+				URLs: sess.stunServers,
 			},
 		},
-	}
+		DataChannel: dataChannelConfiguration,
+	})
 
-	// Create a new RTCPeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(config)
+	return &sess
+}
+
+/// Start a session, according to its kind.
+func (s *Session) Start() error {
+	switch s.kind {
+	case KindMaster:
+		return s.startMasterNode()
+	case KindNode:
+		return s.startNode()
+	default:
+		// This statement can never be reached
+		panic("not possible")
+	}
+}
+
+/// Close the session.
+func (s *Session) Close() {
+	s.rtcClient.Close()
+}
+
+func (s *Session) startMasterNode() error {
+	localOffer, err := s.rtcClient.MakeLocalOffer()
 	if err != nil {
 		return err
 	}
-	s.peerConnection = peerConnection
-	peerConnection.OnICEConnectionStateChange(onConnectionStateChange)
+
+	s.printSDPToOutput(*localOffer)
+
+	remoteAnswer := s.readSDPFromInput()
+
+	if err := s.rtcClient.SetAnswer(remoteAnswer); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-// ReadSDP from the SDP input stream
-func (s *Session) ReadSDP() error {
-	var sdp webrtc.SessionDescription
+func (s *Session) startNode() error {
+	remoteOffer := s.readSDPFromInput()
 
-	fmt.Println("Please, paste the remote SDP:")
-	for {
-		encoded, err := utils.MustReadStream(s.sdpInput)
-		if err == nil {
-			if err := utils.Decode(encoded, &sdp); err == nil {
-				break
-			}
-		}
-		fmt.Println("Invalid SDP, try again...")
+	if err := s.rtcClient.SetRemoteOffer(remoteOffer); err != nil {
+		return err
 	}
-	return s.peerConnection.SetRemoteDescription(sdp)
-}
 
-// CreateDataChannel that will be used to send data
-func (s *Session) CreateDataChannel(c *webrtc.DataChannelInit) (*webrtc.DataChannel, error) {
-	return s.peerConnection.CreateDataChannel("data", c)
-}
-
-// OnDataChannel sets an OnDataChannel handler
-func (s *Session) OnDataChannel(handler func(d *webrtc.DataChannel)) {
-	s.peerConnection.OnDataChannel(handler)
-}
-
-// CreateAnswer set the local description and print the answer SDP
-func (s *Session) CreateAnswer() error {
-	// Create an answer
-	answer, err := s.peerConnection.CreateAnswer(nil)
+	localAnswer, err := s.rtcClient.MakeAnswer()
 	if err != nil {
 		return err
 	}
-	return s.createSessionDescription(answer)
-}
 
-// CreateOffer set the local description and print the offer SDP
-func (s *Session) CreateOffer() error {
-	// Create an offer
-	answer, err := s.peerConnection.CreateOffer(nil)
-	if err != nil {
-		return err
-	}
-	return s.createSessionDescription(answer)
-}
+	s.printSDPToOutput(*localAnswer)
 
-// createSessionDescription set the local description and print the SDP
-func (s *Session) createSessionDescription(desc webrtc.SessionDescription) error {
-	// Sets the LocalDescription, and starts our UDP listeners
-	if err := s.peerConnection.SetLocalDescription(desc); err != nil {
-		return err
-	}
-	desc.SDP = utils.StripSDP(desc.SDP)
-
-	// Output the SDP in base64 so we can paste it in browser
-	resp, err := utils.Encode(desc)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Send this SDP:")
-	fmt.Fprintf(s.sdpOutput, "%s\n", resp)
 	return nil
-}
-
-// OnCompletion is called when session ends
-func (s *Session) OnCompletion() {
-	if s.onCompletion != nil {
-		s.onCompletion()
-	}
 }

@@ -32,8 +32,6 @@ func onReceiveFileButtonClick(_ js.Value, _ []js.Value) interface{} {
 			Configuration: common.Configuration{
 				SDPProvider: sdpInput,
 				SDPOutput:   sdpOutput,
-				OnCompletion: func() {
-				},
 			},
 		})
 

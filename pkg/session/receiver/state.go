@@ -1,13 +1,19 @@
 package receiver
 
 import (
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v3"
 	log "github.com/sirupsen/logrus"
 )
 
 func (s *Session) onConnectionStateChange() func(connectionState webrtc.ICEConnectionState) {
 	return func(connectionState webrtc.ICEConnectionState) {
 		log.Infof("ICE Connection State has changed: %s\n", connectionState.String())
+	}
+}
+
+func (s *Session) onOpen() func(*webrtc.DataChannel) {
+	return func (channel *webrtc.DataChannel) {
+		s.sess.NetworkStats.Start()
 	}
 }
 

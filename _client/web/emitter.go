@@ -58,10 +58,10 @@ func sendFile(fileContent js.Value) {
 
 	// Notify client, in progress
 	if err := sess.Start(); err != nil {
-		// Notifiy client of error
+		// Notify client of error
 		// TODO: Handle error
 	}
-	// Notifiy client of end
+	// Notify client of end
 	processDone <- struct{}{}
 }
 
@@ -101,9 +101,6 @@ func onMenuSendFileClickHandler(_ js.Value, _ []js.Value) interface{} {
 			Configuration: common.Configuration{
 				SDPProvider: sdpInput,
 				SDPOutput:   sdpOutput,
-				OnCompletion: func() {
-					// TODO: Notify user ?
-				},
 			},
 		})
 		globalSess = sess

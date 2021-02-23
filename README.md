@@ -15,7 +15,7 @@ It allows to share a file directly between two computers, without the need of a 
 
 ## Note
 
-This project is still in its early stage.
+This project is provided as is, as a PoC. It isn't intended for any production use, as it lacks proper error handling & retrial logic.
 
 ## How does it work ?
 
