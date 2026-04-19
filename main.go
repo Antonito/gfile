@@ -3,58 +3,44 @@ package main
 import (
 	"os"
 
-	"github.com/antonito/gfile/cmd"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/antonito/gfile/cmd"
 )
 
 func setupLogger() {
-	log.SetOutput(os.Stdout)
+	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
 
-	logLevel := log.WarnLevel
+	logLevel := zerolog.WarnLevel
 
 	if lvl, ok := os.LookupEnv("GFILE_LOG"); ok {
 		switch lvl {
 		case "TRACE":
-			logLevel = log.TraceLevel
+			logLevel = zerolog.TraceLevel
 		case "DEBUG":
-			logLevel = log.DebugLevel
+			logLevel = zerolog.DebugLevel
 		case "INFO":
-			logLevel = log.InfoLevel
+			logLevel = zerolog.InfoLevel
 		case "WARN":
-			logLevel = log.WarnLevel
+			logLevel = zerolog.WarnLevel
 		case "PANIC":
-			logLevel = log.PanicLevel
+			logLevel = zerolog.PanicLevel
 		case "ERROR":
-			logLevel = log.ErrorLevel
+			logLevel = zerolog.ErrorLevel
 		case "FATAL":
-			logLevel = log.FatalLevel
+			logLevel = zerolog.FatalLevel
 		}
 	}
-	log.SetLevel(logLevel)
+	zerolog.SetGlobalLevel(logLevel)
 }
 
 func init() {
 	setupLogger()
 }
 
-func run(args []string) error {
-	app := cli.NewApp()
-	app.Name = "gfile"
-	app.Version = "0.1"
-	cli.VersionFlag = cli.BoolFlag{
-		Name:  "version, V",
-		Usage: "print only the version",
-	}
-	log.Tracef("Starting %s v%v\n", app.Name, app.Version)
-
-	cmd.Install(app)
-	return app.Run(args)
-}
-
 func main() {
-	if err := run(os.Args); err != nil {
-		log.Fatal(err)
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
 	}
 }

@@ -1,0 +1,86 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go: "1.26"
+
+linters:
+  default: none
+  enable:
+    # Default-tier (correctness)
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    # Error handling
+    - errorlint
+    - nilerr
+
+    # Bug-catchers
+    - bodyclose
+    - gosec
+    - gocritic
+
+    # Modern-Go idioms (1.22–1.26)
+    - copyloopvar
+    - intrange
+    - fatcontext
+    - usetesting
+    - usestdlibvars
+    - exptostd
+    - perfsprint
+
+    # Hygiene
+    - misspell
+    - nolintlint
+    - prealloc
+    - revive
+    - testifylint
+    - unconvert
+    - unparam
+
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - ifElseChain
+        - hugeParam
+
+    gosec:
+      excludes:
+        - G115 # integer overflow conversion int -> uint32
+        - G304 # Potential file inclusion via variable
+
+    revive:
+      rules:
+        - name: exported
+        - name: var-naming
+        - name: error-return
+        - name: error-naming
+        - name: unreachable-code
+        - name: redefines-builtin-id
+
+    testifylint:
+      enable-all: true
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+          - unparam
+          - perfsprint
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/antonito/gfile

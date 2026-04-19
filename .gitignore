@@ -17,3 +17,12 @@ dist/
 cover/
 
 *.wasm
+
+# WASM web client build artifacts
+web/main.wasm
+web/wasm_exec.js
+
+# Python artifacts from scripts/
+__pycache__/
+# Git worktrees for isolated feature branches
+.worktrees/

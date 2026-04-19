@@ -1,63 +1,93 @@
 package session
 
 import (
+	"errors"
 	"fmt"
-	"io"
-	"os"
+	"net"
 
-	"github.com/antonito/gfile/pkg/stats"
-	"github.com/antonito/gfile/pkg/utils"
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v4"
+
+	"github.com/antonito/gfile/internal/stats"
+	"github.com/antonito/gfile/internal/utils"
 )
 
-// CompletionHandler to be called when transfer is done
-type CompletionHandler func()
-
-// Session contains common elements to perform send/receive
+// Session wraps a pion PeerConnection with lifecycle state.
 type Session struct {
 	Done           chan struct{}
 	NetworkStats   *stats.Stats
-	sdpInput       io.Reader
-	sdpOutput      io.Writer
 	peerConnection *webrtc.PeerConnection
-	onCompletion   CompletionHandler
-	stunServers    []string
+	cfg            Config
+	detach         bool
 }
 
-// New creates a new Session
-func New(sdpInput io.Reader, sdpOutput io.Writer, customSTUN string) Session {
-	sess := Session{
-		sdpInput:     sdpInput,
-		sdpOutput:    sdpOutput,
+// ErrNoLocalDescription is returned when ICE gathering completes with no local description.
+var ErrNoLocalDescription = errors.New("local description nil after ICE gathering")
+
+// New creates a sender-side Session from cfg.
+func New(cfg Config) Session {
+	return Session{
 		Done:         make(chan struct{}),
 		NetworkStats: stats.New(),
-		stunServers:  []string{fmt.Sprintf("stun:%s", customSTUN)},
+		cfg:          cfg,
 	}
-
-	if sdpInput == nil {
-		sess.sdpInput = os.Stdin
-	}
-	if sdpOutput == nil {
-		sess.sdpOutput = os.Stdout
-	}
-	if customSTUN == "" {
-		sess.stunServers = []string{"stun:stun.l.google.com:19302"}
-	}
-	return sess
 }
 
-// CreateConnection prepares a WebRTC connection
-func (s *Session) CreateConnection(onConnectionStateChange func(connectionState webrtc.ICEConnectionState)) error {
+// NewReceiver creates a Session with pion's DetachDataChannels enabled.
+// Callers must invoke DataChannel.Detach() in OnOpen and drive their own
+// Read loop — OnMessage never fires once detach is on.
+func NewReceiver(cfg Config) Session {
+	s := New(cfg)
+	s.detach = true
+	return s
+}
+
+// IsLoopbackOnly reports whether the session was configured with LoopbackOnly.
+func (s *Session) IsLoopbackOnly() bool {
+	return s.cfg.LoopbackOnly
+}
+
+// CreateConnection prepares a WebRTC connection.
+func (s *Session) CreateConnection(
+	onConnectionStateChange func(connectionState webrtc.ICEConnectionState),
+) error {
+	stunServers := s.cfg.STUNServers
+	if len(stunServers) == 0 {
+		stunServers = []string{"stun:stun.l.google.com:19302"}
+	}
 	config := webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: s.stunServers,
-			},
+			{URLs: stunServers},
 		},
 	}
 
-	// Create a new RTCPeerConnection
-	peerConnection, err := webrtc.NewPeerConnection(config)
+	se := webrtc.SettingEngine{}
+	if s.detach {
+		se.DetachDataChannels()
+	}
+
+	// Pion skips lo0 by default; opt it in so same-host transfers can pick loopback.
+	se.SetIncludeLoopbackCandidate(true)
+
+	if s.cfg.LoopbackOnly {
+		// Force loopback: filter non-loopback interfaces and drop STUN so ICE
+		// can't nominate the physical path or block on a failing gather.
+		se.SetInterfaceFilter(func(name string) bool {
+			iface, err := net.InterfaceByName(name)
+			if err != nil {
+				return false
+			}
+			return iface.Flags&net.FlagLoopback != 0
+		})
+		se.SetNetworkTypes([]webrtc.NetworkType{
+			webrtc.NetworkTypeUDP4,
+			webrtc.NetworkTypeUDP6,
+		})
+		config.ICEServers = nil
+	}
+
+	api := webrtc.NewAPI(webrtc.WithSettingEngine(se))
+
+	peerConnection, err := api.NewPeerConnection(config)
 	if err != nil {
 		return err
 	}
@@ -67,74 +97,84 @@ func (s *Session) CreateConnection(onConnectionStateChange func(connectionState 
 	return nil
 }
 
-// ReadSDP from the SDP input stream
-func (s *Session) ReadSDP() error {
-	var sdp webrtc.SessionDescription
-
-	fmt.Println("Please, paste the remote SDP:")
-	for {
-		encoded, err := utils.MustReadStream(s.sdpInput)
-		if err == nil {
-			if err := utils.Decode(encoded, &sdp); err == nil {
-				break
-			}
-		}
-		fmt.Println("Invalid SDP, try again...")
+// CreateChannel creates an outgoing DataChannel wrapped as a *Channel.
+func (s *Session) CreateChannel(label string) (*Channel, error) {
+	dc, err := s.peerConnection.CreateDataChannel(label, nil)
+	if err != nil {
+		return nil, err
 	}
-	return s.peerConnection.SetRemoteDescription(sdp)
+
+	return newChannel(dc, s.detach), nil
 }
 
-// CreateDataChannel that will be used to send data
-func (s *Session) CreateDataChannel(c *webrtc.DataChannelInit) (*webrtc.DataChannel, error) {
-	return s.peerConnection.CreateDataChannel("data", c)
+// OnChannel registers a handler invoked for every incoming DataChannel.
+func (s *Session) OnChannel(handler func(*Channel)) {
+	s.peerConnection.OnDataChannel(func(dc *webrtc.DataChannel) {
+		handler(newChannel(dc, s.detach))
+	})
 }
 
-// OnDataChannel sets an OnDataChannel handler
-func (s *Session) OnDataChannel(handler func(d *webrtc.DataChannel)) {
-	s.peerConnection.OnDataChannel(handler)
+// MakeOffer creates the offer, sets it locally, and waits for ICE gathering.
+func (s *Session) MakeOffer() (string, error) {
+	offer, err := s.peerConnection.CreateOffer(nil)
+	if err != nil {
+		return "", err
+	}
+	if err := s.peerConnection.SetLocalDescription(offer); err != nil {
+		return "", err
+	}
+
+	<-webrtc.GatheringCompletePromise(s.peerConnection)
+
+	desc := s.peerConnection.LocalDescription()
+	if desc == nil {
+		return "", ErrNoLocalDescription
+	}
+
+	return utils.EncodeSDP(*desc)
 }
 
-// CreateAnswer set the local description and print the answer SDP
-func (s *Session) CreateAnswer() error {
-	// Create an answer
+// AcceptOffer sets the remote offer, creates an answer, and waits for ICE gathering.
+func (s *Session) AcceptOffer(encodedOffer string) (string, error) {
+	offer, err := utils.DecodeSDP(encodedOffer)
+	if err != nil {
+		return "", fmt.Errorf("decode offer: %w", err)
+	}
+	if err := s.peerConnection.SetRemoteDescription(offer); err != nil {
+		return "", fmt.Errorf("set remote: %w", err)
+	}
+
 	answer, err := s.peerConnection.CreateAnswer(nil)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return s.createSessionDescription(answer)
+	if err := s.peerConnection.SetLocalDescription(answer); err != nil {
+		return "", err
+	}
+
+	<-webrtc.GatheringCompletePromise(s.peerConnection)
+
+	desc := s.peerConnection.LocalDescription()
+	if desc == nil {
+		return "", ErrNoLocalDescription
+	}
+	return utils.EncodeSDP(*desc)
 }
 
-// CreateOffer set the local description and print the offer SDP
-func (s *Session) CreateOffer() error {
-	// Create an offer
-	answer, err := s.peerConnection.CreateOffer(nil)
+// AcceptAnswer sets the remote answer on a PeerConnection whose offer was already sent.
+func (s *Session) AcceptAnswer(encodedAnswer string) error {
+	answer, err := utils.DecodeSDP(encodedAnswer)
 	if err != nil {
-		return err
+		return fmt.Errorf("decode answer: %w", err)
 	}
-	return s.createSessionDescription(answer)
+	return s.peerConnection.SetRemoteDescription(answer)
 }
 
-// createSessionDescription set the local description and print the SDP
-func (s *Session) createSessionDescription(desc webrtc.SessionDescription) error {
-	// Sets the LocalDescription, and starts our UDP listeners
-	if err := s.peerConnection.SetLocalDescription(desc); err != nil {
-		return err
+// Close releases the PeerConnection. Safe before CreateConnection and idempotent.
+func (s *Session) Close() error {
+	if s.peerConnection == nil {
+		return nil
 	}
-	desc.SDP = utils.StripSDP(desc.SDP)
 
-	// Output the SDP in base64 so we can paste it in browser
-	resp, err := utils.Encode(desc)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Send this SDP:")
-	fmt.Fprintf(s.sdpOutput, "%s\n", resp)
-	return nil
-}
-
-// OnCompletion is called when session ends
-func (s *Session) OnCompletion() {
-	if s.onCompletion != nil {
-		s.onCompletion()
-	}
+	return s.peerConnection.Close()
 }
