@@ -84,6 +84,13 @@ func (s *Session) createDataHandler(ctx context.Context) {
 			s.multi = newMultiRouter(s.stream, s.path, s.sess.NetworkStats, s.sess.IsLoopbackOnly(), ch, ctx)
 			s.startDataHandler(ctx, ch, s.multi, protocol.MaxControlReadBufSize,
 				func(err error) {
+					// After TRANSFER_COMPLETE the sender tears down its PC,
+					// which surfaces on the control channel as an SCTP
+					// "User Initiated Abort". Mirror the primary channel's
+					// eofSeen gate so post-completion teardown is silent.
+					if s.multi.completeSeen.Load() {
+						return
+					}
 					log.Error().Err(err).Msg("control OnFrames exited")
 				},
 				s.multi.failOnEarlyClose,
@@ -93,6 +100,13 @@ func (s *Session) createDataHandler(ctx context.Context) {
 			s.single = newSingleHandler(s.stream, s.path, s.sess.NetworkStats)
 			s.startDataHandler(ctx, ch, s.single, protocol.MaxDataReadBufSize,
 				func(err error) {
+					// After EOF, verifyAndClose finalises the transfer and
+					// OnFrames exiting with a transport-teardown error
+					// (e.g. pion "reset packet in non-established state")
+					// is just noise. Mirror failOnEarlyClose's gate.
+					if s.single.eofSeen.Load() {
+						return
+					}
 					_ = s.single.core.fail(fmt.Errorf("protocol error: %w", err))
 				},
 				s.single.failOnEarlyClose,

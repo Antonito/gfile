@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/pion/webrtc/v4"
@@ -29,6 +30,11 @@ type multiRouter struct {
 	loopbackOnly bool
 	ctrl         *internalSess.Channel
 	runCtx       context.Context
+
+	// completeSeen races the control channel's OnFrames teardown against
+	// OnTransferComplete; atomic so the init.go onFramesErr gate can read
+	// it without holding mu.
+	completeSeen atomic.Bool
 }
 
 type receivePeer struct {
@@ -85,6 +91,7 @@ func (r *multiRouter) OnTransferComplete() error {
 		return r.core.fail(errors.New("protocol error: TRANSFER_COMPLETE before METADATA"))
 	}
 
+	r.completeSeen.Store(true)
 	go r.core.verifyAndClose()
 
 	return nil
