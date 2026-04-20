@@ -155,8 +155,7 @@ func (s *Session) runMulti(ctx context.Context) {
 
 	// Workers aggregate into s.sess.NetworkStats; reuse the single-PC
 	// progress format so bench.py's parser works identically.
-	progressCtx, stopProgress := context.WithCancel(ctx)
-	go transfer.EmitProgressSamples(progressCtx, transfer.RoleSender, s.sess.NetworkStats)
+	stopProgress := transfer.StartProgressEmitter(ctx, transfer.RoleSender, s.sess.NetworkStats)
 	defer stopProgress()
 
 	chunks := make(chan multiChunk, 2*len(peers))

@@ -21,8 +21,7 @@ func (s *Session) run(ctx context.Context) {
 		return
 	}
 
-	progressCtx, stopProgress := context.WithCancel(ctx)
-	go transfer.EmitProgressSamples(progressCtx, transfer.RoleSender, s.sess.NetworkStats)
+	stopProgress := transfer.StartProgressEmitter(ctx, transfer.RoleSender, s.sess.NetworkStats)
 	defer stopProgress()
 
 	if err := s.sendFile(ctx); err != nil {

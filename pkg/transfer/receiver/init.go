@@ -64,8 +64,7 @@ func (s *Session) Start(ctx context.Context) error {
 		return errors.New("no DataChannel opened within 30s")
 	}
 
-	progressCtx, stopProgress := context.WithCancel(ctx)
-	go transfer.EmitProgressSamples(progressCtx, transfer.RoleReceiver, s.sess.NetworkStats)
+	stopProgress := transfer.StartProgressEmitter(ctx, transfer.RoleReceiver, s.sess.NetworkStats)
 	defer stopProgress()
 
 	if s.multi != nil {

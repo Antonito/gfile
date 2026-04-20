@@ -35,3 +35,23 @@ func EmitProgressSamples(
 		}
 	}
 }
+
+// StartProgressEmitter runs EmitProgressSamples in a goroutine. The returned
+// stop cancels the emitter and waits for the goroutine to exit.
+func StartProgressEmitter(
+	ctx context.Context,
+	role Role,
+	ns *stats.Stats,
+) (stop func()) {
+	ctx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		EmitProgressSamples(ctx, role, ns)
+	}()
+
+	return func() {
+		cancel()
+		<-done
+	}
+}
