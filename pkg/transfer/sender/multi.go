@@ -225,6 +225,7 @@ func (s *Session) buildDataPeers() ([]*dataPeer, error) {
 			id: uint8(ndx),
 			sess: internalSess.New(internalSess.Config{
 				LoopbackOnly: s.sess.IsLoopbackOnly(),
+				ICELite:      s.sess.IsICELite(),
 			}),
 		}
 		peerID := peer.id

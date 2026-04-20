@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pion/ice/v4"
 	"github.com/pion/webrtc/v4"
 	"github.com/stretchr/testify/require"
 
@@ -72,7 +73,15 @@ func settingEngine(detach bool) webrtc.SettingEngine {
 	if detach {
 		se.DetachDataChannels()
 	}
+
+	// SetLite skips full ICE connectivity checks: with both sides ICE-lite on
+	// loopback the pair shortcuts straight to a usable candidate.
+	se.SetLite(true)
 	se.SetIncludeLoopbackCandidate(true)
+	// Pion's default starts an mDNS resolver per PC; tests don't need .local
+	// names, and disabling it removes another timing variable.
+	se.SetICEMulticastDNSMode(ice.MulticastDNSModeDisabled)
+
 	return se
 }
 

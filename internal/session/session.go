@@ -47,6 +47,11 @@ func (s *Session) IsLoopbackOnly() bool {
 	return s.cfg.LoopbackOnly
 }
 
+// IsICELite reports whether the session was configured with ICELite.
+func (s *Session) IsICELite() bool {
+	return s.cfg.ICELite
+}
+
 // CreateConnection prepares a WebRTC connection.
 func (s *Session) CreateConnection(
 	onConnectionStateChange func(connectionState webrtc.ICEConnectionState),
@@ -66,6 +71,10 @@ func (s *Session) CreateConnection(
 	// SCTP CRC32C is redundant under DTLS (RFC 9653); skipping it removes a
 	// CPU bottleneck on fast paths. Negotiated — falls back if the peer rejects.
 	se.EnableSCTPZeroChecksum(true)
+
+	if s.cfg.ICELite {
+		se.SetLite(true)
+	}
 
 	// Pion skips lo0 by default; opt it in so same-host transfers can pick loopback.
 	se.SetIncludeLoopbackCandidate(true)

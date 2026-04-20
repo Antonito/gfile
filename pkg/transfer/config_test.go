@@ -62,3 +62,13 @@ func TestBuildInternalConfigDisableMDNS(t *testing.T) {
 	cfg := BuildInternalConfig(IOConfig{DisableMDNS: true})
 	assert.True(t, cfg.DisableMDNS)
 }
+
+func TestBuildInternalConfigICELiteDefault(t *testing.T) {
+	cfg := BuildInternalConfig(IOConfig{})
+	assert.False(t, cfg.ICELite, "zero-value IOConfig should leave ICELite off")
+}
+
+func TestBuildInternalConfigICELite(t *testing.T) {
+	cfg := BuildInternalConfig(IOConfig{ICELite: true})
+	assert.True(t, cfg.ICELite)
+}

@@ -25,6 +25,13 @@ type IOConfig struct {
 	// DisableMDNS suppresses mDNS candidate gathering. Zero-value means
 	// mDNS is on (peers advertise `.local` hostnames for host candidates).
 	DisableMDNS bool
+	// ICELite enables pion's ICE-Lite mode on every PC this session opens.
+	//
+	// Test-only: it's only safe when both peers are ICE-lite on a guaranteed-
+	// routable path (loopback in-process).
+	//
+	// Production callers must leave this false; the CLI never sets it.
+	ICELite bool
 }
 
 // ResolveIO fills in stdin/stdout defaults and returns the resolved pair.
@@ -55,5 +62,6 @@ func BuildInternalConfig(cfg IOConfig) internalSess.Config {
 		STUNServers:  stun,
 		LoopbackOnly: cfg.LoopbackOnly,
 		DisableMDNS:  cfg.DisableMDNS,
+		ICELite:      cfg.ICELite,
 	}
 }

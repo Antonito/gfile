@@ -21,4 +21,13 @@ type Config struct {
 	// host candidates instead of a raw LAN IP, matching browser
 	// behavior. Ignored under LoopbackOnly.
 	DisableMDNS bool
+
+	// ICELite enables pion's ICE-Lite mode, which skips the connectivity-
+	// check loop.
+	//
+	// Test-only: it's only safe when both peers are ICE-lite
+	// on a guaranteed-routable path (e.g. loopback in-process).
+	//
+	// Production transfers must leave this false.
+	ICELite bool
 }

@@ -81,7 +81,7 @@ func (s *Session) createDataHandler(ctx context.Context) {
 
 		switch label {
 		case protocol.ControlLabel:
-			s.multi = newMultiRouter(s.stream, s.path, s.sess.NetworkStats, s.sess.IsLoopbackOnly(), ch, ctx)
+			s.multi = newMultiRouter(s.stream, s.path, s.sess.NetworkStats, s.sess.IsLoopbackOnly(), s.sess.IsICELite(), ch, ctx)
 			s.startDataHandler(ctx, ch, s.multi, protocol.MaxControlReadBufSize,
 				func(err error) {
 					// After TRANSFER_COMPLETE the sender tears down its PC,

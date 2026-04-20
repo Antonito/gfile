@@ -28,6 +28,7 @@ type multiRouter struct {
 	peers map[uint8]*receivePeer
 
 	loopbackOnly bool
+	iceLite      bool
 	ctrl         *internalSess.Channel
 	runCtx       context.Context
 
@@ -38,11 +39,22 @@ type multiRouter struct {
 }
 
 type receivePeer struct {
-	id      uint8
-	sess    *internalSess.Session
-	ch      *internalSess.Channel
-	decoder *zstd.Decoder
-	scratch []byte
+	id        uint8
+	sess      *internalSess.Session
+	sessClose sync.Once
+	ch        *internalSess.Channel
+	decoder   *zstd.Decoder
+	scratch   []byte
+}
+
+// closeSess closes p.sess at most once. Safe to call from any goroutine and
+// before sess has been wired up (no-op if sess is nil).
+func (p *receivePeer) closeSess() {
+	p.sessClose.Do(func() {
+		if p.sess != nil {
+			_ = p.sess.Close()
+		}
+	})
 }
 
 func newMultiRouter(
@@ -50,12 +62,14 @@ func newMultiRouter(
 	path string,
 	ns *stats.Stats,
 	loopback bool,
+	iceLite bool,
 	ctrl *internalSess.Channel,
 	runCtx context.Context,
 ) *multiRouter {
 	r := &multiRouter{
 		peers:        make(map[uint8]*receivePeer),
 		loopbackOnly: loopback,
+		iceLite:      iceLite,
 		ctrl:         ctrl,
 		runCtx:       runCtx,
 	}
@@ -105,15 +119,13 @@ func (r *multiRouter) OnAbort(reason string) error {
 func (r *multiRouter) negotiateReceivePeer(id uint8, offerSDP string) {
 	sess := internalSess.NewReceiver(internalSess.Config{
 		LoopbackOnly: r.loopbackOnly,
+		ICELite:      r.iceLite,
 	})
 
-	// Register sess into r.peers up front so cleanup() will close it even
-	// if we're cancelled or fail mid-handshake. OnAddPeerOffer already
-	// reserved the slot as nil; we overwrite with a real peer.
-	r.mu.Lock()
-	r.peers[id] = &receivePeer{id: id, sess: &sess}
-	r.mu.Unlock()
-
+	// Build sess fully BEFORE publishing into r.peers. Otherwise the
+	// CreateConnection write to sess.peerConnection races with cleanup()'s
+	// concurrent Close (cleanup acquires r.mu, but the field write happens
+	// after we release it).
 	if err := sess.CreateConnection(func(state webrtc.ICEConnectionState) {
 		log.Debug().Msgf("recv data-%d ICE state %s", id, state)
 	}); err != nil {
@@ -130,6 +142,21 @@ func (r *multiRouter) negotiateReceivePeer(id uint8, offerSDP string) {
 		r.installDataPeer(id, ch)
 	})
 
+	peer := &receivePeer{id: id, sess: &sess}
+	r.mu.Lock()
+	r.peers[id] = peer
+	r.mu.Unlock()
+
+	// On every failure/cancel exit the sess must be closed; on success
+	// cleanup() owns it. sessClose dedupes if cleanup already ran while we
+	// were mid-handshake (it iterated the map without seeing this peer).
+	success := false
+	defer func() {
+		if !success {
+			peer.closeSess()
+		}
+	}()
+
 	answerSDP, err := sess.AcceptOffer(offerSDP)
 	if err != nil {
 		_ = r.core.fail(fmt.Errorf("peer %d AcceptOffer: %w", id, err))
@@ -137,7 +164,7 @@ func (r *multiRouter) negotiateReceivePeer(id uint8, offerSDP string) {
 	}
 
 	// Bail before we publish an ANSWER if the transfer was cancelled or
-	// already failed; cleanup() has (or will) close peer.sess.
+	// already failed; the defer will close sess.
 	select {
 	case <-r.runCtx.Done():
 		return
@@ -150,6 +177,8 @@ func (r *multiRouter) negotiateReceivePeer(id uint8, offerSDP string) {
 		_ = r.core.fail(fmt.Errorf("peer %d send ANSWER: %w", id, err))
 		return
 	}
+
+	success = true
 }
 
 // cleanup tears down every peer's decoder and PC. Runs inside doneOnce.
@@ -167,9 +196,7 @@ func (r *multiRouter) cleanup() {
 			peer.decoder = nil
 		}
 
-		if peer.sess != nil {
-			_ = peer.sess.Close()
-		}
+		peer.closeSess()
 	}
 }
 
@@ -198,8 +225,10 @@ func (r *multiRouter) installDataPeer(id uint8, ch *internalSess.Channel) {
 		dec = d
 	}
 
-	// negotiateReceivePeer always populated the slot before registering the
-	// OnChannel callback that calls us, so peer is guaranteed non-nil.
+	// The OnChannel callback that invoked us cannot fire until AcceptOffer
+	// has driven ICE/DTLS/SCTP to open the data channel, which is strictly
+	// after negotiateReceivePeer published peer into r.peers — so peer is
+	// guaranteed non-nil here.
 	r.mu.Lock()
 	peer := r.peers[id]
 	peer.ch = ch
