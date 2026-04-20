@@ -63,6 +63,10 @@ func (s *Session) CreateConnection(
 		se.DetachDataChannels()
 	}
 
+	// SCTP CRC32C is redundant under DTLS (RFC 9653); skipping it removes a
+	// CPU bottleneck on fast paths. Negotiated — falls back if the peer rejects.
+	se.EnableSCTPZeroChecksum(true)
+
 	// Pion skips lo0 by default; opt it in so same-host transfers can pick loopback.
 	se.SetIncludeLoopbackCandidate(true)
 
