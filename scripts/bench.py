@@ -88,7 +88,11 @@ def _drain_stream(stream, out_list: list[str]) -> None:
 
 
 class _RunProgress:
-    """Thread-safe per-run progress state shared between drain and monitor."""
+    """Thread-safe per-run progress state shared between drain and monitor.
+
+    Also collects sender-side bandwidth samples (one per progress event) so
+    the run can report a windowed peak/p50/min alongside the sustained rate.
+    """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -96,6 +100,11 @@ class _RunProgress:
         self.sender_bytes = 0  # bytes sent by the sender so far
         self.total_bytes = 0  # total bytes to transfer; 0 = unknown yet
         self.start_time = time.monotonic()
+        # Sender bandwidth samples in MiB/s. The emitter fires one progress
+        # event before any bytes flow (see pkg/transfer/progress.go), which
+        # reports bw=0; we skip those so the distribution reflects real
+        # transfer rate only.
+        self.sender_bw_samples: list[float] = []
 
     def update(self, role: str, verb: str, bw: float, sent_bytes: int | None) -> None:
         # Only the sender's upload rate is meaningful for live display;
@@ -105,6 +114,8 @@ class _RunProgress:
                 self.sender_bw = bw
                 if sent_bytes is not None:
                     self.sender_bytes = sent_bytes
+                if bw > 0:
+                    self.sender_bw_samples.append(bw)
 
     def set_total_bytes(self, n: int) -> None:
         with self._lock:
@@ -119,6 +130,19 @@ class _RunProgress:
                 "total_bytes": self.total_bytes,
                 "elapsed": time.monotonic() - self.start_time,
             }
+
+    def bw_distribution(self) -> dict[str, float | int] | None:
+        """Return peak/p50/min over collected sender samples, or None if empty."""
+        with self._lock:
+            samples = list(self.sender_bw_samples)
+        if not samples:
+            return None
+        return {
+            "peak_mib_per_sec": max(samples),
+            "p50_mib_per_sec": statistics.median(samples),
+            "min_mib_per_sec": min(samples),
+            "samples": len(samples),
+        }
 
 
 def _render_bar(done: float, total: float, width: int = 20) -> str:
@@ -200,7 +224,7 @@ def run_one(
     progress: _RunProgress | None = None,
     size_mb: int | None = None,
     connections: int | None = None,
-) -> dict[str, float | int]:
+) -> dict[str, float | int | dict[str, float | int] | None]:
     deadline = time.monotonic() + timeout
 
     sender_args = [*GO_CMD, "--json-output", "bench", "-s", "--loopback"]
@@ -333,11 +357,13 @@ def run_one(
                 file=sys.stderr,
             )
         bps = float(sender_stats[0]["bytes_per_sec"])
-        return {
+        result: dict[str, float | int | dict[str, float | int] | None] = {
             "bytes": s_bytes,
             "mib_per_sec": bps / (1024 * 1024),
             "receiver_bytes": r_bytes,
+            "windowed": progress.bw_distribution() if progress is not None else None,
         }
+        return result
     finally:
         for p in (sender, receiver):
             if p is not None and p.poll() is None:
@@ -349,17 +375,33 @@ def _to_bps(mib_per_sec: float) -> float:
     return mib_per_sec * _MIB
 
 
-def format_human(runs: list[dict[str, float | int]]) -> str:
+def format_human(runs: list[dict]) -> str:
     n = len(runs)
     lines = []
     for i, r in enumerate(runs, 1):
         lines.append(
-            f"run {i}/{n}: {r['mib_per_sec']:.2f} MiB/s  ({r['bytes']} B)"
+            f"run {i}/{n}: {r['mib_per_sec']:.2f} MiB/s sustained  ({r['bytes']} B)"
         )
+        windowed = r.get("windowed")
+        if windowed is not None:
+            lines.append(
+                f"         windowed: peak {windowed['peak_mib_per_sec']:.2f}  "
+                f"p50 {windowed['p50_mib_per_sec']:.2f}  "
+                f"min {windowed['min_mib_per_sec']:.2f} MiB/s "
+                f"(n={windowed['samples']})"
+            )
     summary = summarize([float(r["mib_per_sec"]) for r in runs])
     lines.append("")
     lines.append(f"Summary ({n} run{'s' if n != 1 else ''}):")
-    lines.append(f"  Bandwidth: {_fmt_summary(summary)} MiB/s")
+    lines.append(f"  Sustained: {_fmt_summary(summary)} MiB/s")
+    # Across-runs peak is useful to eyeball "did any run manage to top out higher?"
+    peaks = [
+        float(r["windowed"]["peak_mib_per_sec"])
+        for r in runs
+        if r.get("windowed") is not None
+    ]
+    if peaks:
+        lines.append(f"  Peak (max across runs): {max(peaks):.2f} MiB/s")
     return "\n".join(lines)
 
 
@@ -371,15 +413,23 @@ def _fmt_summary(s: dict[str, float | None]) -> str:
     )
 
 
-def format_json(runs: list[dict[str, float | int]]) -> str:
-    out_runs = [
-        {
+def format_json(runs: list[dict]) -> str:
+    out_runs = []
+    for r in runs:
+        entry: dict[str, object] = {
             "bytes_per_sec": _to_bps(float(r["mib_per_sec"])),
             "bytes": int(r["bytes"]),
         }
-        for r in runs
-    ]
-    bps = [r["bytes_per_sec"] for r in out_runs]
+        windowed = r.get("windowed")
+        if windowed is not None:
+            entry["windowed"] = {
+                "peak_bytes_per_sec": _to_bps(float(windowed["peak_mib_per_sec"])),
+                "p50_bytes_per_sec": _to_bps(float(windowed["p50_mib_per_sec"])),
+                "min_bytes_per_sec": _to_bps(float(windowed["min_mib_per_sec"])),
+                "samples": int(windowed["samples"]),
+            }
+        out_runs.append(entry)
+    bps = [float(r["bytes_per_sec"]) for r in out_runs]
     return json.dumps(
         {
             "runs": out_runs,
@@ -420,14 +470,16 @@ def main(argv: list[str] | None = None) -> int:
 
     progress_stream = sys.stderr if args.json else sys.stdout
     interactive = not args.json
-    results: list[dict[str, float | int]] = []
+    results: list[dict] = []
     for i in range(1, args.runs + 1):
         print(f"[{i}/{args.runs}] running bench...", file=progress_stream, flush=True)
-        run_progress: _RunProgress | None = None
+        # Always collect samples — cheap, and the windowed distribution is
+        # useful in both human and JSON output. Only the live render thread
+        # is interactive-only.
+        run_progress = _RunProgress()
         monitor_stop: threading.Event | None = None
         monitor_thread: threading.Thread | None = None
         if interactive:
-            run_progress = _RunProgress()
             monitor_stop = threading.Event()
             monitor_thread = threading.Thread(
                 target=_monitor_progress,
