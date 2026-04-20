@@ -25,6 +25,21 @@ The [STUN server](https://en.wikipedia.org/wiki/STUN) is only used to help the t
 
 For wire-format and session-protocol details, see [PROTOCOL.md](PROTOCOL.md).
 
+### STUN configuration
+
+`gfile` defaults to Google's public STUN server (`stun.l.google.com:19302`). You can override this with `--stun`:
+
+```bash
+# Use a specific STUN server
+gfile --stun stun.cloudflare.com:3478 send -f filename
+
+# Use multiple STUN servers (comma-separated)
+gfile --stun stun.l.google.com:19302,stun.cloudflare.com:3478 send -f filename
+
+# Disable STUN entirely — host/mDNS candidates only (LAN use)
+gfile --stun="" send -f filename
+```
+
 ## Usage
 
 ### Sender

@@ -44,14 +44,14 @@ func newReceiveCmd(globalFlags *globalFlags) *cobra.Command {
 				_ = fh.Close()
 			}()
 
-			stun, err := globalFlags.ResolvedSTUN()
+			stuns, err := globalFlags.ResolvedSTUNs()
 			if err != nil {
 				return err
 			}
 
 			conf := receiver.Config{
 				IOConfig: transfer.IOConfig{
-					STUN:        stun,
+					STUNServers: stuns,
 					SDPProvider: sdpReader,
 				},
 				Stream: fh,

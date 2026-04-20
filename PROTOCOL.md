@@ -2,8 +2,10 @@
 
 gfile transfers a file between two peers over one or more WebRTC data channels.
 A STUN server helps the two peers find each other through NAT; the file itself
-never transits a third party. This document describes the wire format and the
-two transfer modes (single-PC and multi-PC).
+never transits a third party. STUN can be disabled (`--stun=""`) to fall back
+to host/mDNS candidates only — useful on a LAN where no public reflexive
+candidate is needed. This document describes the wire format and the two
+transfer modes (single-PC and multi-PC).
 
 ## Signaling
 

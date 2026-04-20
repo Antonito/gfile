@@ -50,14 +50,11 @@ func (s *Session) IsLoopbackOnly() bool {
 func (s *Session) CreateConnection(
 	onConnectionStateChange func(connectionState webrtc.ICEConnectionState),
 ) error {
-	stunServers := s.cfg.STUNServers
-	if len(stunServers) == 0 {
-		stunServers = []string{"stun:stun.l.google.com:19302"}
-	}
-	config := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{URLs: stunServers},
-		},
+	config := webrtc.Configuration{}
+	if len(s.cfg.STUNServers) > 0 {
+		config.ICEServers = []webrtc.ICEServer{
+			{URLs: s.cfg.STUNServers},
+		}
 	}
 
 	se := webrtc.SettingEngine{}

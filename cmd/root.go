@@ -11,10 +11,8 @@ import (
 )
 
 func newRootCmd() *cobra.Command {
-	var (
-		stunServer string
-		jsonOutput bool
-	)
+	var jsonOutput bool
+	flags := &globalFlags{}
 
 	root := &cobra.Command{
 		Use:     "gfile",
@@ -40,16 +38,14 @@ func newRootCmd() *cobra.Command {
 			}
 		},
 	}
-	root.PersistentFlags().StringVar(&stunServer, "stun", "",
-		"Use a specific STUN server (e.g., stun.l.google.com:19302)",
+	root.PersistentFlags().StringSliceVar(&flags.stunServers, "stun",
+		[]string{"stun.l.google.com:19302"},
+		`STUN servers as comma-separated host:port (e.g. --stun a:3478,b:3478). `+
+			`Pass --stun="" to disable STUN and rely on host/mDNS candidates only.`,
 	)
 	root.PersistentFlags().BoolVar(&jsonOutput, "json-output", false,
 		"Emit newline-delimited JSON events on stdout; route human text to stderr",
 	)
-
-	flags := &globalFlags{
-		stunServer,
-	}
 
 	root.AddCommand(
 		newSendCmd(flags),

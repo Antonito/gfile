@@ -33,8 +33,19 @@ func TestBuildInternalConfigEmptySTUN(t *testing.T) {
 }
 
 func TestBuildInternalConfigWrapsSTUN(t *testing.T) {
-	cfg := BuildInternalConfig(IOConfig{STUN: "stun.example.com:3478"})
+	cfg := BuildInternalConfig(IOConfig{STUNServers: []string{"stun.example.com:3478"}})
 	assert.Equal(t, []string{"stun:stun.example.com:3478"}, cfg.STUNServers)
+}
+
+func TestBuildInternalConfigWrapsMultipleSTUN(t *testing.T) {
+	cfg := BuildInternalConfig(IOConfig{STUNServers: []string{
+		"stun.example.com:3478",
+		"stun.other.com:19302",
+	}})
+	assert.Equal(t, []string{
+		"stun:stun.example.com:3478",
+		"stun:stun.other.com:19302",
+	}, cfg.STUNServers)
 }
 
 func TestBuildInternalConfigLoopback(t *testing.T) {

@@ -13,8 +13,11 @@ type IOConfig struct {
 	SDPProvider io.Reader
 	// SDPOutput writes the local SDP. Nil falls back to os.Stdout.
 	SDPOutput io.Writer
-	// STUN is an optional STUN host[:port]. Empty disables STUN.
-	STUN string
+	// STUNServers is a list of STUN host:port entries. Each is prefixed
+	// with "stun:" before being passed through to the ICE config. A nil
+	// or empty slice disables STUN entirely — useful on a LAN where
+	// host/mDNS candidates are enough.
+	STUNServers []string
 	// DisableQR suppresses the QR render of the local SDP.
 	DisableQR bool
 	// LoopbackOnly pins ICE to lo0 and drops STUN (bench only).
@@ -38,8 +41,11 @@ func ResolveIO(cfg IOConfig) (in io.Reader, out io.Writer) {
 // BuildInternalConfig maps IOConfig to an internalSess.Config.
 func BuildInternalConfig(cfg IOConfig) internalSess.Config {
 	var stun []string
-	if cfg.STUN != "" {
-		stun = []string{"stun:" + cfg.STUN}
+	if len(cfg.STUNServers) > 0 {
+		stun = make([]string, len(cfg.STUNServers))
+		for i, s := range cfg.STUNServers {
+			stun[i] = "stun:" + s
+		}
 	}
 
 	return internalSess.Config{

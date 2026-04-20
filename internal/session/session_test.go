@@ -40,9 +40,18 @@ func Test_NewReceiver_EnablesDetach(t *testing.T) {
 	asrt.True(sess.detach)
 }
 
-func Test_CreateConnection_DefaultSTUN(t *testing.T) {
+func Test_CreateConnection_NoSTUN(t *testing.T) {
 	asrt := assert.New(t)
-	sess := New(Config{}) // nil STUNServers → default Google STUN
+	sess := New(Config{}) // nil STUNServers → no ICE server, host-only candidates
+
+	err := sess.CreateConnection(func(webrtc.ICEConnectionState) {})
+	asrt.NoError(err)
+	asrt.NoError(sess.Close())
+}
+
+func Test_CreateConnection_WithSTUN(t *testing.T) {
+	asrt := assert.New(t)
+	sess := New(Config{STUNServers: []string{"stun:stun.l.google.com:19302"}})
 
 	err := sess.CreateConnection(func(webrtc.ICEConnectionState) {})
 	asrt.NoError(err)

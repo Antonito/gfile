@@ -3,16 +3,22 @@ package cmd
 import "github.com/antonito/gfile/internal/utils"
 
 type globalFlags struct {
-	stunServer string
+	stunServers []string
 }
 
-func (flags *globalFlags) ResolvedSTUN() (string, error) {
-	if flags.stunServer == "" {
-		return "", nil
+// ResolvedSTUNs validates each --stun entry and returns the filtered list.
+// Empty entries (e.g. from --stun="") are dropped so users can opt out of
+// STUN entirely and rely on host/mDNS candidates only.
+func (flags *globalFlags) ResolvedSTUNs() ([]string, error) {
+	out := make([]string, 0, len(flags.stunServers))
+	for _, s := range flags.stunServers {
+		if s == "" {
+			continue
+		}
+		if err := utils.ParseSTUN(s); err != nil {
+			return nil, err
+		}
+		out = append(out, s)
 	}
-	if err := utils.ParseSTUN(flags.stunServer); err != nil {
-		return "", err
-	}
-
-	return flags.stunServer, nil
+	return out, nil
 }

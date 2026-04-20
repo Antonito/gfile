@@ -33,15 +33,15 @@ func newSendCmd(globalFlags *globalFlags) *cobra.Command {
 				_ = fh.Close()
 			}()
 
-			stun, err := globalFlags.ResolvedSTUN()
+			stuns, err := globalFlags.ResolvedSTUNs()
 			if err != nil {
 				return err
 			}
 
 			cfg := sender.Config{
 				IOConfig: transfer.IOConfig{
-					STUN:      stun,
-					DisableQR: !qr,
+					STUNServers: stuns,
+					DisableQR:   !qr,
 				},
 				Stream:           fh,
 				CompressionLevel: compressionLevel,

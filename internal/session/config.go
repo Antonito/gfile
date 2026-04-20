@@ -1,12 +1,12 @@
 package session
 
 // Config describes the networking knobs for a PeerConnection-backed Session.
-// A zero value is valid: default STUN (applied at CreateConnection time),
-// no loopback pinning.
+// A zero value is valid: no STUN, no loopback pinning. The CLI layer is
+// responsible for providing a default STUN server when one is wanted.
 type Config struct {
-	// STUNServers are the full ICE STUN URLs ("stun:host:port"). A nil or
-	// empty slice resolves to the default Google STUN URL at
-	// CreateConnection time. Passed through to webrtc.ICEServer.URLs.
+	// STUNServers are the full ICE STUN URLs ("stun:host:port"). A nil
+	// or empty slice disables STUN entirely — the session will produce
+	// only host (and mDNS) candidates. Passed through to webrtc.ICEServer.URLs.
 	STUNServers []string
 
 	// LoopbackOnly pins ICE to loopback-only interfaces and drops STUN,
