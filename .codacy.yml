@@ -1,4 +1,0 @@
----
-exclude_paths:
-  - '_client/web/stream_saver.js'
-  - '_client/web/wasm_exec.js'
