@@ -22,6 +22,9 @@ type IOConfig struct {
 	DisableQR bool
 	// LoopbackOnly pins ICE to lo0 and drops STUN (bench only).
 	LoopbackOnly bool
+	// DisableMDNS suppresses mDNS candidate gathering. Zero-value means
+	// mDNS is on (peers advertise `.local` hostnames for host candidates).
+	DisableMDNS bool
 }
 
 // ResolveIO fills in stdin/stdout defaults and returns the resolved pair.
@@ -51,5 +54,6 @@ func BuildInternalConfig(cfg IOConfig) internalSess.Config {
 	return internalSess.Config{
 		STUNServers:  stun,
 		LoopbackOnly: cfg.LoopbackOnly,
+		DisableMDNS:  cfg.DisableMDNS,
 	}
 }

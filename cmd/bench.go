@@ -42,6 +42,7 @@ func newBenchCmd() *cobra.Command {
 				IOConfig: transfer.IOConfig{
 					DisableQR:    true,
 					LoopbackOnly: loopback,
+					DisableMDNS:  true,
 				},
 				CompressionLevel: compressionLevel,
 				Connections:      connections,
@@ -143,6 +144,7 @@ func runBenchReceiver(loopback bool) error {
 		IOConfig: transfer.IOConfig{
 			DisableQR:    true,
 			LoopbackOnly: loopback,
+			DisableMDNS:  true,
 		},
 		Stream: file,
 		Path:   outPath,

@@ -53,6 +53,7 @@ func newReceiveCmd(globalFlags *globalFlags) *cobra.Command {
 				IOConfig: transfer.IOConfig{
 					STUNServers: stuns,
 					SDPProvider: sdpReader,
+					DisableMDNS: !globalFlags.mdns,
 				},
 				Stream: fh,
 				Path:   outputPath,

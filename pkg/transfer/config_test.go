@@ -52,3 +52,13 @@ func TestBuildInternalConfigLoopback(t *testing.T) {
 	cfg := BuildInternalConfig(IOConfig{LoopbackOnly: true})
 	assert.True(t, cfg.LoopbackOnly)
 }
+
+func TestBuildInternalConfigMDNSDefault(t *testing.T) {
+	cfg := BuildInternalConfig(IOConfig{})
+	assert.False(t, cfg.DisableMDNS, "zero-value IOConfig should leave mDNS enabled")
+}
+
+func TestBuildInternalConfigDisableMDNS(t *testing.T) {
+	cfg := BuildInternalConfig(IOConfig{DisableMDNS: true})
+	assert.True(t, cfg.DisableMDNS)
+}

@@ -4,6 +4,7 @@ import "github.com/antonito/gfile/internal/utils"
 
 type globalFlags struct {
 	stunServers []string
+	mdns        bool
 }
 
 // ResolvedSTUNs validates each --stun entry and returns the filtered list.

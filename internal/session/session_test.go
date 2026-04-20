@@ -57,3 +57,15 @@ func Test_CreateConnection_WithSTUN(t *testing.T) {
 	asrt.NoError(err)
 	asrt.NoError(sess.Close())
 }
+
+func Test_CreateConnection_LoopbackSkipsMDNS(t *testing.T) {
+	// Regression guard: LoopbackOnly path should succeed even when
+	// DisableMDNS is left at its zero value, since session.go is supposed
+	// to short-circuit mDNS gathering on loopback.
+	asrt := assert.New(t)
+	sess := New(Config{LoopbackOnly: true})
+
+	err := sess.CreateConnection(func(webrtc.ICEConnectionState) {})
+	asrt.NoError(err)
+	asrt.NoError(sess.Close())
+}

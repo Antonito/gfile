@@ -40,6 +40,16 @@ gfile --stun stun.l.google.com:19302,stun.cloudflare.com:3478 send -f filename
 gfile --stun="" send -f filename
 ```
 
+### mDNS
+
+By default `gfile` advertises host ICE candidates as `.local` mDNS hostnames instead of raw LAN IPs, matching modern browser behavior. This keeps your internal network topology out of the SDP you paste around, and is enough for a LAN transfer even with `--stun=""`.
+
+Disable it if a peer on the other side cannot resolve mDNS:
+
+```bash
+gfile --mdns=false send -f filename
+```
+
 ## Usage
 
 ### Sender

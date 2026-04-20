@@ -43,6 +43,10 @@ func newRootCmd() *cobra.Command {
 		`STUN servers as comma-separated host:port (e.g. --stun a:3478,b:3478). `+
 			`Pass --stun="" to disable STUN and rely on host/mDNS candidates only.`,
 	)
+	root.PersistentFlags().BoolVar(&flags.mdns, "mdns", true,
+		"Advertise host ICE candidates as .local mDNS hostnames instead of raw LAN IPs. "+
+			"Disable with --mdns=false if a peer cannot resolve mDNS.",
+	)
 	root.PersistentFlags().BoolVar(&jsonOutput, "json-output", false,
 		"Emit newline-delimited JSON events on stdout; route human text to stderr",
 	)

@@ -42,6 +42,7 @@ func newSendCmd(globalFlags *globalFlags) *cobra.Command {
 				IOConfig: transfer.IOConfig{
 					STUNServers: stuns,
 					DisableQR:   !qr,
+					DisableMDNS: !globalFlags.mdns,
 				},
 				Stream:           fh,
 				CompressionLevel: compressionLevel,

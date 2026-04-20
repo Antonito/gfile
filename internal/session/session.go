@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/pion/ice/v4"
 	"github.com/pion/webrtc/v4"
 
 	"github.com/antonito/gfile/internal/stats"
@@ -64,6 +65,12 @@ func (s *Session) CreateConnection(
 
 	// Pion skips lo0 by default; opt it in so same-host transfers can pick loopback.
 	se.SetIncludeLoopbackCandidate(true)
+
+	// mDNS advertises host candidates as `.local` names instead of raw IPs.
+	// Skip under LoopbackOnly — lo0 candidates don't need name resolution.
+	if !s.cfg.LoopbackOnly && !s.cfg.DisableMDNS {
+		se.SetICEMulticastDNSMode(ice.MulticastDNSModeQueryAndGather)
+	}
 
 	if s.cfg.LoopbackOnly {
 		// Force loopback: filter non-loopback interfaces and drop STUN so ICE
